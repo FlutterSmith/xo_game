@@ -1,23 +1,68 @@
-List<List<int>> winPatterns = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [2, 4, 6],
-];
-
-Map<String, dynamic>? checkWinner(List<String> board) {
-  for (var pattern in winPatterns) {
-    String a = board[pattern[0]];
-    if (a != '' && a == board[pattern[1]] && a == board[pattern[2]]) {
-      return {'winner': a, 'winningCells': pattern};
+Map<String, dynamic>? checkWinnerDynamic(List<String> board, int boardSize, int winCondition) {
+  for (int row = 0; row < boardSize; row++) {
+    for (int col = 0; col <= boardSize - winCondition; col++) {
+      String first = board[row * boardSize + col];
+      if (first == '') continue;
+      bool win = true;
+      List<int> indices = [];
+      for (int offset = 0; offset < winCondition; offset++) {
+        if (board[row * boardSize + col + offset] != first) {
+          win = false;
+          break;
+        }
+        indices.add(row * boardSize + col + offset);
+      }
+      if (win) return {'winner': first, 'winningCells': indices};
     }
   }
-  if (!board.contains('')) {
-    return {'winner': 'Draw', 'winningCells': []};
+  for (int col = 0; col < boardSize; col++) {
+    for (int row = 0; row <= boardSize - winCondition; row++) {
+      String first = board[row * boardSize + col];
+      if (first == '') continue;
+      bool win = true;
+      List<int> indices = [];
+      for (int offset = 0; offset < winCondition; offset++) {
+        if (board[(row + offset) * boardSize + col] != first) {
+          win = false;
+          break;
+        }
+        indices.add((row + offset) * boardSize + col);
+      }
+      if (win) return {'winner': first, 'winningCells': indices};
+    }
   }
+  for (int row = 0; row <= boardSize - winCondition; row++) {
+    for (int col = 0; col <= boardSize - winCondition; col++) {
+      String first = board[row * boardSize + col];
+      if (first == '') continue;
+      bool win = true;
+      List<int> indices = [];
+      for (int offset = 0; offset < winCondition; offset++) {
+        if (board[(row + offset) * boardSize + col + offset] != first) {
+          win = false;
+          break;
+        }
+        indices.add((row + offset) * boardSize + col + offset);
+      }
+      if (win) return {'winner': first, 'winningCells': indices};
+    }
+  }
+  for (int row = 0; row <= boardSize - winCondition; row++) {
+    for (int col = winCondition - 1; col < boardSize; col++) {
+      String first = board[row * boardSize + col];
+      if (first == '') continue;
+      bool win = true;
+      List<int> indices = [];
+      for (int offset = 0; offset < winCondition; offset++) {
+        if (board[(row + offset) * boardSize + col - offset] != first) {
+          win = false;
+          break;
+        }
+        indices.add((row + offset) * boardSize + col - offset);
+      }
+      if (win) return {'winner': first, 'winningCells': indices};
+    }
+  }
+  if (!board.contains('')) return {'winner': 'Draw', 'winningCells': []};
   return null;
 }
