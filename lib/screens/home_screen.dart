@@ -14,7 +14,7 @@ class HomeScreen extends StatelessWidget {
     final gameBloc = context.read<GameBloc>();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Advanced Tic Tac Toe'),
+        title: const Text('TicTac by AH'),
         actions: [
           IconButton(
             icon: const Icon(Icons.brightness_6),

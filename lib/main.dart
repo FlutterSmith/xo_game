@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       builder: (context, theme) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Advanced Tic Tac Toe',
+          title: ' TicTac by AH',
           theme: theme,
           home: const HomeScreen(),
         );
