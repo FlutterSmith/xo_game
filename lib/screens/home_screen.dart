@@ -111,8 +111,8 @@ class HomeScreen extends StatelessWidget {
                     ),
                     ElevatedButton(
                       onPressed: () => gameBloc.add(const ToggleGameMode()),
-                      child:
-                          Text(state.gameMode == GameMode.PvP ? 'PvP' : 'PvC'),
+                      child: Text(
+                          state.gameMode == GameMode.PvP ? '1vs1' : '1vsPC'),
                     ),
                   ],
                 ),
