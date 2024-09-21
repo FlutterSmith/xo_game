@@ -14,7 +14,7 @@ class HomeScreen extends StatelessWidget {
     final gameBloc = context.read<GameBloc>();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Advanced Tic Tac Toe'),
+        title: const Text('X&O  by AH'),
         actions: [
           IconButton(
             icon: const Icon(Icons.brightness_6),
@@ -96,8 +96,9 @@ class HomeScreen extends StatelessWidget {
                     ),
                     ElevatedButton(
                       onPressed: () => gameBloc.add(const ToggleGameMode()),
-                      child:
-                          Text(state.gameMode == GameMode.PvP ? 'PvP' : 'PvC'),
+                      child: Text(state.gameMode == GameMode.PvP
+                          ? '1 VS 1'
+                          : 'Player VS PC'),
                     ),
                   ],
                 ),
