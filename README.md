@@ -64,6 +64,33 @@
 ### 📦 Steps to Run
 
 1️⃣ **Clone the Repository**  
-```bash
-git clone https://github.com/yourusername/advanced_xo_game.git
-cd advanced_xo_game
+  ```
+   git clone https://github.com/yourusername/advanced_xo_game.git
+   cd advanced_xo_game
+
+
+
+
+```
+2️⃣ Install Dependencies
+```
+flutter pub get
+```
+3️⃣ Run the App
+```
+flutter run
+```
+
+📌 Future Improvements
+✅ Custom Board Sizes & Win Conditions
+✅ Enhanced Animations & Sound Effects
+✅ Additional Game Modes & Online Leaderboards
+✅ Localization for Multiple Languages
+
+🏆 Contributors
+DM me
+
+📝 License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+📢 Enjoy playing Advanced X‑O Game! If you find this project helpful or exciting, please consider 🌟 starring the repository and contributing to its ongoing development. 🚀🔥
