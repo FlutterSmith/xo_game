@@ -58,3 +58,9 @@ class LoadHistory extends GameEvent {
 class ClearHistory extends GameEvent {
   const ClearHistory();
 }
+class SetPlayerSide extends GameEvent {
+  final String side; // "X" or "O"
+  const SetPlayerSide(this.side);
+  @override
+  List<Object> get props => [side];
+}

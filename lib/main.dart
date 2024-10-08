@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'blocs/theme_cubit.dart';
 import 'blocs/game_bloc.dart';
-import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
 
 void main() {
   runApp(MultiBlocProvider(
@@ -26,7 +26,7 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: ' TicTac by AH',
           theme: theme,
-          home: const HomeScreen(),
+          home: const SplashScreen(),
         );
       },
     );

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'animated_mark.dart';
 
-class CellWidget4 extends StatelessWidget {
+class CellWidget5 extends StatelessWidget {
   final int index;
   final String value;
   final bool highlight;
   final VoidCallback onTap;
-  const CellWidget4({
+  const CellWidget5({
     super.key,
     required this.index,
     required this.value,
@@ -15,7 +15,7 @@ class CellWidget4 extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    Color cellColor = highlight ? Colors.orangeAccent : Colors.white;
+    Color cellColor = highlight ? Colors.purpleAccent : Colors.white;
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -23,12 +23,12 @@ class CellWidget4 extends StatelessWidget {
         decoration: BoxDecoration(
           color: cellColor,
           border: Border.all(color: Colors.black, width: 2),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Center(
           child: value.isEmpty
               ? const SizedBox.shrink()
-              : AnimatedMark(mark: value, markSize: 60),
+              : AnimatedMark(mark: value, markSize: 40),
         ),
       ),
     );
