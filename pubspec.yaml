@@ -1,5 +1,6 @@
 name: advanced_xo_game
-description: Advanced Tic Tac Toe game with enhanced UI/UX, adaptive AI, undo/redo and game history using BLoC.
+description: Advanced Tic Tac Toe game with enhanced UI/UX, adaptive AI,
+  undo/redo and game history using BLoC.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -7,13 +8,13 @@ environment:
   sdk: ">=2.17.0 <3.0.0"
 
 dependencies:
+  cupertino_icons: ^1.0.2
+  equatable: ^2.0.3
   flutter:
     sdk: flutter
-  flutter_bloc: ^8.1.0
-  equatable: ^2.0.3
-  cupertino_icons: ^1.0.2
-  sqflite: ^2.0.0+4
+  flutter_bloc: ^9.0.0
   path: ^1.8.0
+  sqflite: ^2.0.0+4
 
 dev_dependencies:
   flutter_launcher_icons: "^0.14.3"
@@ -31,6 +32,6 @@ flutter_launcher_icons:
   web: true
   macos: true
   windows: true
-  
+
   image_path: "assets/icon/icon.png"
-  min_sdk_android: 21  
+  min_sdk_android: 21
