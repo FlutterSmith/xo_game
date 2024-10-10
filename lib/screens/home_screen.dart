@@ -28,7 +28,10 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
-        title: const Text(' X‑O '),
+        title: const Text(
+          ' by A H',
+          style: TextStyle(color: Colors.grey),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.brightness_6),
@@ -45,123 +48,155 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: BlocBuilder<GameBloc, GameState>(
-        builder: (context, state) {
-          return Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blue.shade200, Colors.blue.shade900],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  state.gameOver
-                      ? state.resultMessage
-                      : 'Turn: ${state.currentPlayer}',
-                  style: const TextStyle(
-                    fontSize: 28,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+      body: BlocListener<GameBloc, GameState>(
+        listener: (context, state) {
+          if (state.aiMessage.isNotEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Center(
+                  child: Text(
+                    state.aiMessage,
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ),
-                const SizedBox(height: 10),
-                // Dropdown for board size selection.
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Board Size:',
-                        style: TextStyle(fontSize: 16, color: Colors.white)),
-                    const SizedBox(width: 10),
-                    DropdownButton<int>(
-                      value: state.boardSize,
-                      dropdownColor: Colors.blue.shade700,
-                      items: [3, 4, 5]
-                          .map(
-                            (e) => DropdownMenuItem<int>(
-                              value: e,
-                              child: Text(' ${e}x$e',
-                                  style: const TextStyle(color: Colors.white)),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          gameBloc.add(UpdateBoardSettings(value, value));
-                        }
-                      },
-                    ),
-                  ],
+                duration: const Duration(seconds: 1),
+                backgroundColor: Colors.blue,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(height: 10),
-                // Dropdown for AI difficulty selection.
-                DropdownButton<AIDifficulty>(
-                  value: state.aiDifficulty,
-                  dropdownColor: Colors.blue.shade700,
-                  items: AIDifficulty.values
-                      .map(
-                        (e) => DropdownMenuItem<AIDifficulty>(
-                          value: e,
-                          child: Text(
-                              e.toString().split('.').last.toUpperCase(),
-                              style: const TextStyle(color: Colors.white)),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      gameBloc.add(ChangeDifficulty(value));
-                    }
-                  },
-                ),
-                const SizedBox(height: 10),
-                // Display appropriate board widget.
-                state.boardSize == 3
-                    ? const BoardWidget3()
-                    : state.boardSize == 4
-                        ? const BoardWidget4()
-                        : const BoardWidget5(),
-                const SizedBox(height: 10),
-                // Bottom control row.
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    AdvancedNeumorphicButton(
-                      onPressed: state.undoStack.isNotEmpty
-                          ? () => gameBloc.add(const UndoMove())
-                          : () {},
-                      child: const Text(
-                        'Undo',
-                        style: TextStyle(fontSize: 16, color: Colors.black),
-                      ),
-                    ),
-                    AdvancedNeumorphicButton(
-                      onPressed: state.redoStack.isNotEmpty
-                          ? () => gameBloc.add(const RedoMove())
-                          : () {},
-                      child: const Text(
-                        'Redo',
-                        style: TextStyle(fontSize: 16, color: Colors.black),
-                      ),
-                    ),
-                    AdvancedNeumorphicButton(
-                      onPressed: () => gameBloc.add(const ToggleGameMode()),
-                      child: Text(
-                        state.gameMode == GameMode.PvP ? 'PvP' : 'PvC',
-                        style:
-                            const TextStyle(fontSize: 16, color: Colors.black),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
+              ),
+            );
+          }
         },
+        child: BlocBuilder<GameBloc, GameState>(
+          builder: (context, state) {
+            return Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.blue.shade200, Colors.blue.shade900],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    state.gameOver
+                        ? state.resultMessage
+                        : 'Turn: ${state.currentPlayer}',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      color: Colors.white,
+                      fontFamily: 'assets/fonts/Inter-Bold.ttf',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Dropdown for board size selection.
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Board Size:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                            fontFamily: 'assets/fonts/Poppins-Bold.ttf',
+                          )),
+                      const SizedBox(width: 10),
+                      DropdownButton<int>(
+                        value: state.boardSize,
+                        dropdownColor: Colors.blue.shade700,
+                        items: [3, 4, 5]
+                            .map(
+                              (e) => DropdownMenuItem<int>(
+                                value: e,
+                                child: Text(' ${e}x$e',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontFamily:
+                                          'assets/fonts/Poppins-Bold.ttf',
+                                    )),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            gameBloc.add(UpdateBoardSettings(value, value));
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Dropdown for AI difficulty selection.
+                  DropdownButton<AIDifficulty>(
+                    value: state.aiDifficulty,
+                    dropdownColor: Colors.blue.shade700,
+                    items: AIDifficulty.values
+                        .map(
+                          (e) => DropdownMenuItem<AIDifficulty>(
+                            value: e,
+                            child: Text(
+                                e.toString().split('.').last.toUpperCase(),
+                                style: const TextStyle(color: Colors.white)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        gameBloc.add(ChangeDifficulty(value));
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  // Display appropriate board widget.
+                  state.boardSize == 3
+                      ? const BoardWidget3()
+                      : state.boardSize == 4
+                          ? const BoardWidget4()
+                          : const BoardWidget5(),
+                  const SizedBox(height: 10),
+                  // Bottom control row.
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      AdvancedNeumorphicButton(
+                        onPressed: state.undoStack.isNotEmpty
+                            ? () => gameBloc.add(const UndoMove())
+                            : () {},
+                        child: const Text(
+                          'Undo',
+                          style: TextStyle(fontSize: 16, color: Colors.black),
+                        ),
+                      ),
+                      AdvancedNeumorphicButton(
+                        onPressed: state.redoStack.isNotEmpty
+                            ? () => gameBloc.add(const RedoMove())
+                            : () {},
+                        child: const Text(
+                          'Redo',
+                          style: TextStyle(fontSize: 16, color: Colors.black),
+                        ),
+                      ),
+                      AdvancedNeumorphicButton(
+                        onPressed: () => gameBloc.add(const ToggleGameMode()),
+                        child: Text(
+                          state.gameMode == GameMode.PvP
+                              ? 'Player vs Player'
+                              : 'Player vs PC',
+                          style: const TextStyle(
+                              fontSize: 16, color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
