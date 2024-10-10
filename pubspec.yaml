@@ -26,6 +26,102 @@ flutter:
 
   assets:
     - assets/icon/icon.png
+    - assets/fonts
+
+
+
+  fonts:
+    - family: Inter
+      fonts:
+        - asset:  assets/fonts/Inter-Light.ttf
+          weight: 300
+        - asset:  assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset:  assets/fonts/Inter-Bold.ttf
+          weight: 700
+        - asset:  assets/fonts/Inter-ExtraBold.ttf
+          weight: 800
+        - asset:  assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset:  assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+    - family: Poppins
+      fonts:
+        - asset:  assets/fonts/Poppins-Bold.ttf
+          weight: 700
+        - asset:  assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset:  assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset:  assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+    - family: Almarai
+      fonts:
+        - asset: assets/fonts/Almarai-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Almarai-Regular.ttf
+          weight: 400
+        
+        - asset: assets/fonts/Almarai-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Almarai-ExtraBold.ttf
+          weight: 800    
+    - family: NunitoSans
+      fonts:
+        - asset: assets/fonts/NunitoSans-Light.ttf
+          weight: 300
+        - asset: assets/fonts/NunitoSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NunitoSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NunitoSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/NunitoSans-ExtraBold.ttf
+          weight: 800          
+    - family: InterDisplay
+      fonts:
+        - asset: assets/fonts/InterDisplay-Light.ttf
+          weight: 300
+        - asset: assets/fonts/InterDisplay-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/InterDisplay-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/InterDisplay-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/InterDisplay-ExtraBold.ttf
+          weight: 800   
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-Regular.otf
+          weight: 400
+        - asset: assets/fonts/Manrope-Light.otf
+          weight: 300
+        - asset: assets/fonts/manrope-medium.otf
+          weight: 500
+        - asset: assets/fonts/Manrope-Bold.otf
+          weight: 700
+        - asset: assets/fonts/Manrope-ExtraBold.otf
+          weight: 800    
+    - family: Raleway
+      fonts:
+        - asset: assets/fonts/Raleway-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Raleway-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Raleway-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Raleway-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Raleway-ExtraBold.ttf
+          weight: 800        
+    - family: SFProDisplay
+      fonts:
+        - asset: assets/fonts/SFPRODISPLAY-REGULAR.OTF
+          weight: 400
+        - asset: assets/fonts/SFPRODISPLAY-MEDIUM.OTF
+          weight: 500
+        - asset: assets/fonts/SFPRODISPLAY-BOLD.OTF
+          weight: 700        
 flutter_launcher_icons:
   android: true
   ios: true
