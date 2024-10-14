@@ -6,7 +6,7 @@ import '../blocs/game_event.dart';
 import 'cell_widget4.dart';
 
 class BoardWidget4 extends StatelessWidget {
-  const BoardWidget4({super.key});
+  BoardWidget4({super.key});
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<GameBloc, GameState>(
