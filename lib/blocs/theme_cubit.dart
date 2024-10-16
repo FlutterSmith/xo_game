@@ -52,7 +52,7 @@ class ThemeCubit extends Cubit<ThemeData> {
       ),
       iconTheme: IconThemeData(color: Colors.white),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: const Color(0xFF1e293b),
       elevation: 8,
       shadowColor: const Color(0xFF8b5cf6).withOpacity(0.3),
@@ -134,7 +134,7 @@ class ThemeCubit extends Cubit<ThemeData> {
       ),
       iconTheme: IconThemeData(color: Color(0xFF0f172a)),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       color: Colors.white,
       elevation: 8,
       shadowColor: const Color(0xFF8b5cf6).withOpacity(0.2),

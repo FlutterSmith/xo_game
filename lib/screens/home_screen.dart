@@ -498,8 +498,8 @@ class HomeScreen extends StatelessWidget {
       child: state.boardSize == 3
           ? const BoardWidget3()
           : state.boardSize == 4
-              ? BoardWidget4()
-              : BoardWidget5(),
+              ? const BoardWidget4()
+              : const BoardWidget5(),
     );
   }
 
