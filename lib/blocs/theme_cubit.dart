@@ -8,7 +8,7 @@ class ThemeCubit extends Cubit<ThemeData> {
   static final _darkTheme = ThemeData(
     brightness: Brightness.dark,
     primaryColor: const Color(0xFF8b5cf6), // Violet
-    scaffoldBackgroundColor: const Color(0xFF0f172a), // Deep Navy
+    scaffoldBackgroundColor: const Color(0xFF0a0118), // Deep Purple-Navy
     fontFamily: 'Inter',
     textTheme: const TextTheme(
       headlineLarge: TextStyle(
@@ -41,7 +41,7 @@ class ThemeCubit extends Cubit<ThemeData> {
       ),
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF1e293b),
+      backgroundColor: Color(0xFF0a0118),
       elevation: 0,
       centerTitle: true,
       titleTextStyle: TextStyle(
@@ -81,7 +81,7 @@ class ThemeCubit extends Cubit<ThemeData> {
       secondary: Color(0xFFec4899), // Pink
       tertiary: Color(0xFF16f2b3), // Green
       surface: Color(0xFF1e293b),
-      background: Color(0xFF0f172a),
+      background: Color(0xFF0a0118),
       error: Color(0xFFef4444),
     ),
   );
