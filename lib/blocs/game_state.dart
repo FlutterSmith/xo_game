@@ -59,7 +59,7 @@ class GameState extends Equatable {
       winningCells: [],
       undoStack: [],
       redoStack: [],
-      gameMode: GameMode.PvP,
+      gameMode: GameMode.PvC, // Default to Player vs Computer
       aiDifficulty: AIDifficulty.hard,
       gameHistory: [],
       boardSize: size,

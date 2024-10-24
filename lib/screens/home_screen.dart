@@ -533,6 +533,68 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
+              // Game Mode Selector
+              _buildControlRow(
+                context,
+                'Game Mode',
+                DropdownButtonHideUnderline(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFec4899).withOpacity(0.15),
+                          const Color(0xFF8b5cf6).withOpacity(0.15),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF8b5cf6).withOpacity(0.3),
+                      ),
+                    ),
+                    child: DropdownButton<GameMode>(
+                      value: state.gameMode,
+                      dropdownColor: isDark ? const Color(0xFF1e1436) : Colors.white,
+                      icon: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: isDark ? Colors.white : const Color(0xFF1e1436),
+                      ),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF1e1436),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Raleway',
+                      ),
+                      items: GameMode.values.map((mode) {
+                        return DropdownMenuItem(
+                          value: mode,
+                          child: Row(
+                            children: [
+                              Icon(
+                                mode == GameMode.PvP
+                                    ? Icons.people_rounded
+                                    : Icons.smart_toy_rounded,
+                                size: 18,
+                                color: const Color(0xFF8b5cf6),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(mode == GameMode.PvP ? 'Player vs Player' : 'Player vs AI'),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          gameBloc.add(const ToggleGameMode());
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                isDark,
+              ),
+              const SizedBox(height: 16),
+
               // AI Difficulty Selector
               _buildControlRow(
                 context,
