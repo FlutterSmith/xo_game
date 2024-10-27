@@ -10,6 +10,7 @@ import '../blocs/settings_cubit.dart';
 import '../blocs/statistics_cubit.dart';
 import '../models/app_settings.dart';
 import '../models/game_stats.dart';
+import '../services/sound_service.dart';
 import '../widgets/board_widget3.dart';
 import '../widgets/board_widget5.dart';
 import '../widgets/board_widget.dart';
@@ -20,6 +21,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final gameBloc = context.read<GameBloc>();
+    final soundService = SoundService();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -103,7 +105,7 @@ class HomeScreen extends StatelessWidget {
                         const SizedBox(height: 24),
 
                         // Action buttons with modern design
-                        _buildModernActionButtons(context, state, gameBloc, isDark),
+                        _buildModernActionButtons(context, state, gameBloc, isDark, soundService),
                       ],
                     ),
                   ),
@@ -245,7 +247,10 @@ class HomeScreen extends StatelessWidget {
               size: 22,
             ),
           ),
-          onPressed: () => gameBloc.add(const ResetGame()),
+          onPressed: () {
+            soundService.playButton();
+            gameBloc.add(const ResetGame());
+          },
         ),
         const SizedBox(width: 12),
       ],
@@ -710,13 +715,16 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildModernActionButtons(BuildContext context, GameState state, GameBloc gameBloc, bool isDark) {
+  Widget _buildModernActionButtons(BuildContext context, GameState state, GameBloc gameBloc, bool isDark, SoundService soundService) {
     return Row(
       children: [
         Expanded(
           child: AdvancedNeumorphicButton(
             onPressed: state.undoStack.isNotEmpty
-                ? () => gameBloc.add(const UndoMove())
+                ? () {
+                    soundService.playButton();
+                    gameBloc.add(const UndoMove());
+                  }
                 : () {},
             isEnabled: state.undoStack.isNotEmpty,
             child: Row(
@@ -741,7 +749,10 @@ class HomeScreen extends StatelessWidget {
         Expanded(
           child: AdvancedNeumorphicButton(
             onPressed: state.redoStack.isNotEmpty
-                ? () => gameBloc.add(const RedoMove())
+                ? () {
+                    soundService.playButton();
+                    gameBloc.add(const RedoMove());
+                  }
                 : () {},
             isEnabled: state.redoStack.isNotEmpty,
             child: Row(

@@ -79,8 +79,17 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         _soundService.playDraw();
         _vibrationService.medium();
       } else {
-        _soundService.playWin();
-        _vibrationService.win();
+        // Check if player won or AI won
+        final winner = result['winner'] as String;
+        final isPlayerWin = (state.gameMode == GameMode.PvP) || winner == 'X';
+
+        if (isPlayerWin) {
+          _soundService.playWin();
+          _vibrationService.win();
+        } else {
+          _soundService.playLose();
+          _vibrationService.medium();
+        }
       }
 
       // Save game replay
