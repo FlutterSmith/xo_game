@@ -14,6 +14,7 @@ import '../services/sound_service.dart';
 import '../widgets/board_widget3.dart';
 import '../widgets/board_widget5.dart';
 import '../widgets/board_widget.dart';
+import '../widgets/confetti_widget.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -109,6 +110,16 @@ class HomeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+
+                  // Win confetti overlay
+                  if (state.gameOver && state.resultMessage.contains('Winner'))
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: WinConfettiWidget(
+                          shouldPlay: state.gameOver && state.resultMessage.contains('Winner'),
+                        ),
+                      ),
+                    ),
                 ],
               );
             },
