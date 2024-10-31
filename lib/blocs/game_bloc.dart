@@ -33,6 +33,10 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<LoadHistory>(_onLoadHistory);
     on<ClearHistory>(_onClearHistory);
     on<SetPlayerSide>(_onSetPlayerSide);
+    on<ToggleTimedMode>(_onToggleTimedMode);
+    on<SetTimeLimit>(_onSetTimeLimit);
+    on<TimerTick>(_onTimerTick);
+    on<TimeoutMove>(_onTimeoutMove);
     _vibrationService.initialize();
   }
 
@@ -118,6 +122,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         undoStack: newUndoStack,
         redoStack: [],
         aiMessage: "",
+        timeRemaining: state.timeLimit, // Reset timer
+        isTimerActive: state.timedMode, // Activate timer if in timed mode
       ));
       if (state.gameMode == GameMode.PvC && nextPlayer == 'O') {
         await Future.delayed(const Duration(milliseconds: 300));
@@ -442,5 +448,75 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       // Silently handle replay save errors
       // In production, you would log this
     }
+  }
+
+  // Timer event handlers
+  FutureOr<void> _onToggleTimedMode(ToggleTimedMode event, Emitter<GameState> emit) {
+    emit(state.copyWith(
+      timedMode: !state.timedMode,
+      timeRemaining: state.timeLimit,
+      isTimerActive: false,
+    ));
+  }
+
+  FutureOr<void> _onSetTimeLimit(SetTimeLimit event, Emitter<GameState> emit) {
+    emit(state.copyWith(
+      timeLimit: event.seconds,
+      timeRemaining: event.seconds,
+    ));
+  }
+
+  FutureOr<void> _onTimerTick(TimerTick event, Emitter<GameState> emit) {
+    if (!state.timedMode || !state.isTimerActive || state.gameOver) return null;
+
+    final newTime = state.timeRemaining - 1;
+
+    if (newTime <= 0) {
+      // Time's up! Handle timeout
+      add(const TimeoutMove());
+      return null;
+    }
+
+    emit(state.copyWith(timeRemaining: newTime));
+    return null;
+  }
+
+  FutureOr<void> _onTimeoutMove(TimeoutMove event, Emitter<GameState> emit) async {
+    if (!state.timedMode || state.gameOver) return null;
+
+    // Stop the timer
+    emit(state.copyWith(isTimerActive: false));
+
+    // In PvP mode or when it's player's turn in PvC, forfeit the turn
+    if (state.gameMode == GameMode.PvP || state.currentPlayer == 'X') {
+      // End the game - current player loses due to timeout
+      final winner = state.currentPlayer == 'X' ? 'O' : 'X';
+      final outcome = "Winner: $winner (Timeout)";
+
+      _soundService.playLose();
+      _vibrationService.medium();
+
+      emit(state.copyWith(
+        gameOver: true,
+        resultMessage: outcome,
+        isTimerActive: false,
+      ));
+
+      await _db.insertHistory(outcome);
+      return null;
+    }
+
+    // If AI's turn timed out, make a random move
+    final emptyIndices = <int>[];
+    for (int i = 0; i < state.board.length; i++) {
+      if (state.board[i] == '') emptyIndices.add(i);
+    }
+
+    if (emptyIndices.isNotEmpty) {
+      final randomIndex = emptyIndices[Random().nextInt(emptyIndices.length)];
+      add(MoveMade(randomIndex));
+    }
+
+    return null;
   }
 }
