@@ -28,7 +28,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: _buildAppBar(context, isDark, gameBloc),
+      appBar: _buildAppBar(context, isDark, gameBloc, soundService),
       drawer: _buildDrawer(context),
       body: Container(
         decoration: BoxDecoration(
@@ -130,7 +130,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context, bool isDark, GameBloc gameBloc) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, bool isDark, GameBloc gameBloc, SoundService soundService) {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,

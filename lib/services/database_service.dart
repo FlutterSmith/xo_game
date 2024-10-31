@@ -1,18 +1,33 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:convert';
 import '../models/game_stats.dart';
 import '../models/app_settings.dart';
 import '../models/achievement.dart';
 import '../models/game_replay.dart';
 
 /// Enhanced database service for managing all app data
+/// Uses sqflite for mobile platforms and shared_preferences for web
 class DatabaseService {
   static final DatabaseService instance = DatabaseService._init();
   static Database? _database;
+  static SharedPreferences? _prefs;
 
   DatabaseService._init();
 
+  Future<SharedPreferences> get prefs async {
+    if (_prefs != null) return _prefs!;
+    _prefs = await SharedPreferences.getInstance();
+    await _initWebDefaults();
+    return _prefs!;
+  }
+
   Future<Database> get database async {
+    if (kIsWeb) {
+      throw UnsupportedError('SQLite not supported on web. Use shared_preferences methods instead.');
+    }
     if (_database != null) return _database!;
     _database = await _initDB('xo_game.db');
     return _database!;
@@ -26,6 +41,119 @@ class DatabaseService {
       version: 1,
       onCreate: _createDB,
     );
+  }
+
+  Future<void> _initWebDefaults() async {
+    final prefs = _prefs!;
+
+    // Initialize stats if not exists
+    if (!prefs.containsKey('game_stats')) {
+      await prefs.setString('game_stats', jsonEncode(GameStats.empty().toMap()));
+    }
+
+    // Initialize settings if not exists
+    if (!prefs.containsKey('app_settings')) {
+      await prefs.setString('app_settings', jsonEncode(AppSettings.defaultSettings().toMap()));
+    }
+
+    // Initialize achievements if not exists
+    if (!prefs.containsKey('achievements')) {
+      await prefs.setString('achievements', jsonEncode(_getDefaultAchievements()));
+    }
+
+    // Initialize empty lists if not exists
+    if (!prefs.containsKey('game_replays')) {
+      await prefs.setString('game_replays', jsonEncode([]));
+    }
+
+    if (!prefs.containsKey('history')) {
+      await prefs.setString('history', jsonEncode([]));
+    }
+  }
+
+  List<Map<String, dynamic>> _getDefaultAchievements() {
+    return [
+      {
+        'id': 1,
+        'key': 'first_win',
+        'title': 'First Victory',
+        'description': 'Win your first game',
+        'icon': '🏆',
+        'unlocked': 0,
+        'progress': 0,
+        'target': 1,
+      },
+      {
+        'id': 2,
+        'key': 'win_10',
+        'title': 'Novice Champion',
+        'description': 'Win 10 games',
+        'icon': '🎯',
+        'unlocked': 0,
+        'progress': 0,
+        'target': 10,
+      },
+      {
+        'id': 3,
+        'key': 'win_50',
+        'title': 'Expert Player',
+        'description': 'Win 50 games',
+        'icon': '⭐',
+        'unlocked': 0,
+        'progress': 0,
+        'target': 50,
+      },
+      {
+        'id': 4,
+        'key': 'win_100',
+        'title': 'Master Champion',
+        'description': 'Win 100 games',
+        'icon': '👑',
+        'unlocked': 0,
+        'progress': 0,
+        'target': 100,
+      },
+      {
+        'id': 5,
+        'key': 'beat_hard_ai',
+        'title': 'AI Slayer',
+        'description': 'Beat Hard AI difficulty',
+        'icon': '🤖',
+        'unlocked': 0,
+        'progress': 0,
+        'target': 1,
+      },
+      {
+        'id': 6,
+        'key': 'win_streak_5',
+        'title': 'Hot Streak',
+        'description': 'Win 5 games in a row',
+        'icon': '🔥',
+        'unlocked': 0,
+        'progress': 0,
+        'target': 5,
+      },
+      {
+        'id': 7,
+        'key': 'play_all_boards',
+        'title': 'Board Explorer',
+        'description': 'Play on all board sizes',
+        'icon': '🎮',
+        'unlocked': 0,
+        'progress': 0,
+        'target': 3,
+      },
+      {
+        'id': 8,
+        'key': 'perfect_game',
+        'title': 'Flawless Victory',
+        'description': 'Win without opponent scoring',
+        'icon': '💎',
+        'unlocked': 0,
+        'progress': 0,
+        'target': 1,
+      },
+    ];
   }
 
   Future _createDB(Database db, int version) async {
@@ -202,6 +330,17 @@ class DatabaseService {
   // ===== GAME STATS METHODS =====
 
   Future<GameStats> getStats() async {
+    if (kIsWeb) {
+      final prefs = await this.prefs;
+      final statsJson = prefs.getString('game_stats');
+      if (statsJson == null) {
+        final emptyStats = GameStats.empty();
+        await prefs.setString('game_stats', jsonEncode(emptyStats.toMap()));
+        return emptyStats;
+      }
+      return GameStats.fromMap(jsonDecode(statsJson));
+    }
+
     final db = await database;
     final maps = await db.query('game_stats', where: 'id = ?', whereArgs: [1]);
 
@@ -215,6 +354,12 @@ class DatabaseService {
   }
 
   Future<void> updateStats(GameStats stats) async {
+    if (kIsWeb) {
+      final prefs = await this.prefs;
+      await prefs.setString('game_stats', jsonEncode(stats.toMap()));
+      return;
+    }
+
     final db = await database;
     await db.update(
       'game_stats',
@@ -225,6 +370,12 @@ class DatabaseService {
   }
 
   Future<void> resetStats() async {
+    if (kIsWeb) {
+      final prefs = await this.prefs;
+      await prefs.setString('game_stats', jsonEncode(GameStats.empty().toMap()));
+      return;
+    }
+
     final db = await database;
     await db.update(
       'game_stats',
@@ -237,6 +388,17 @@ class DatabaseService {
   // ===== APP SETTINGS METHODS =====
 
   Future<AppSettings> getSettings() async {
+    if (kIsWeb) {
+      final prefs = await this.prefs;
+      final settingsJson = prefs.getString('app_settings');
+      if (settingsJson == null) {
+        final defaultSettings = AppSettings.defaultSettings();
+        await prefs.setString('app_settings', jsonEncode(defaultSettings.toMap()));
+        return defaultSettings;
+      }
+      return AppSettings.fromMap(jsonDecode(settingsJson));
+    }
+
     final db = await database;
     final maps = await db.query('app_settings', where: 'id = ?', whereArgs: [1]);
 
@@ -250,6 +412,12 @@ class DatabaseService {
   }
 
   Future<void> updateSettings(AppSettings settings) async {
+    if (kIsWeb) {
+      final prefs = await this.prefs;
+      await prefs.setString('app_settings', jsonEncode(settings.toMap()));
+      return;
+    }
+
     final db = await database;
     await db.update(
       'app_settings',
@@ -262,12 +430,33 @@ class DatabaseService {
   // ===== ACHIEVEMENTS METHODS =====
 
   Future<List<Achievement>> getAchievements() async {
+    if (kIsWeb) {
+      final prefs = await this.prefs;
+      final achievementsJson = prefs.getString('achievements');
+      if (achievementsJson == null) {
+        final defaultAchievements = _getDefaultAchievements();
+        await prefs.setString('achievements', jsonEncode(defaultAchievements));
+        return defaultAchievements.map((map) => Achievement.fromMap(map)).toList();
+      }
+      final List<dynamic> decoded = jsonDecode(achievementsJson);
+      return decoded.map((map) => Achievement.fromMap(map as Map<String, dynamic>)).toList();
+    }
+
     final db = await database;
     final maps = await db.query('achievements', orderBy: 'id ASC');
     return maps.map((map) => Achievement.fromMap(map)).toList();
   }
 
   Future<Achievement?> getAchievementByKey(String key) async {
+    if (kIsWeb) {
+      final achievements = await getAchievements();
+      try {
+        return achievements.firstWhere((a) => a.key == key);
+      } catch (e) {
+        return null;
+      }
+    }
+
     final db = await database;
     final maps = await db.query(
       'achievements',
@@ -280,6 +469,17 @@ class DatabaseService {
   }
 
   Future<void> updateAchievement(Achievement achievement) async {
+    if (kIsWeb) {
+      final achievements = await getAchievements();
+      final index = achievements.indexWhere((a) => a.id == achievement.id);
+      if (index != -1) {
+        achievements[index] = achievement;
+        final prefs = await this.prefs;
+        await prefs.setString('achievements', jsonEncode(achievements.map((a) => a.toMap()).toList()));
+      }
+      return;
+    }
+
     final db = await database;
     await db.update(
       'achievements',
@@ -290,6 +490,20 @@ class DatabaseService {
   }
 
   Future<void> unlockAchievement(String key) async {
+    if (kIsWeb) {
+      final achievements = await getAchievements();
+      final index = achievements.indexWhere((a) => a.key == key);
+      if (index != -1) {
+        achievements[index] = achievements[index].copyWith(
+          unlocked: true,
+          unlockedDate: DateTime.now().toIso8601String(),
+        );
+        final prefs = await this.prefs;
+        await prefs.setString('achievements', jsonEncode(achievements.map((a) => a.toMap()).toList()));
+      }
+      return;
+    }
+
     final db = await database;
     await db.update(
       'achievements',
@@ -303,19 +517,29 @@ class DatabaseService {
   }
 
   Future<void> updateAchievementProgress(String key, int progress) async {
-    final db = await database;
     final achievement = await getAchievementByKey(key);
 
     if (achievement != null && !achievement.unlocked) {
       if (progress >= achievement.target) {
         await unlockAchievement(key);
       } else {
-        await db.update(
-          'achievements',
-          {'progress': progress},
-          where: 'key = ?',
-          whereArgs: [key],
-        );
+        if (kIsWeb) {
+          final achievements = await getAchievements();
+          final index = achievements.indexWhere((a) => a.key == key);
+          if (index != -1) {
+            achievements[index] = achievements[index].copyWith(progress: progress);
+            final prefs = await this.prefs;
+            await prefs.setString('achievements', jsonEncode(achievements.map((a) => a.toMap()).toList()));
+          }
+        } else {
+          final db = await database;
+          await db.update(
+            'achievements',
+            {'progress': progress},
+            where: 'key = ?',
+            whereArgs: [key],
+          );
+        }
       }
     }
   }
@@ -323,11 +547,33 @@ class DatabaseService {
   // ===== GAME REPLAYS METHODS =====
 
   Future<int> saveReplay(GameReplay replay) async {
+    if (kIsWeb) {
+      final prefs = await this.prefs;
+      final replaysJson = prefs.getString('game_replays') ?? '[]';
+      final List<dynamic> replays = jsonDecode(replaysJson);
+
+      // Generate ID
+      final int newId = replays.isEmpty ? 1 : (replays.map((r) => r['id'] as int).reduce((a, b) => a > b ? a : b) + 1);
+      final replayWithId = replay.toMap()..['id'] = newId;
+
+      replays.insert(0, replayWithId); // Insert at beginning for DESC order
+      await prefs.setString('game_replays', jsonEncode(replays));
+      return newId;
+    }
+
     final db = await database;
     return await db.insert('game_replays', replay.toMap());
   }
 
   Future<List<GameReplay>> getReplays({int limit = 50}) async {
+    if (kIsWeb) {
+      final prefs = await this.prefs;
+      final replaysJson = prefs.getString('game_replays') ?? '[]';
+      final List<dynamic> decoded = jsonDecode(replaysJson);
+      final replays = decoded.map((map) => GameReplay.fromMap(map as Map<String, dynamic>)).toList();
+      return replays.take(limit).toList();
+    }
+
     final db = await database;
     final maps = await db.query(
       'game_replays',
@@ -338,6 +584,15 @@ class DatabaseService {
   }
 
   Future<GameReplay?> getReplay(int id) async {
+    if (kIsWeb) {
+      final replays = await getReplays(limit: 1000);
+      try {
+        return replays.firstWhere((r) => r.id == id);
+      } catch (e) {
+        return null;
+      }
+    }
+
     final db = await database;
     final maps = await db.query(
       'game_replays',
@@ -350,6 +605,15 @@ class DatabaseService {
   }
 
   Future<void> deleteReplay(int id) async {
+    if (kIsWeb) {
+      final prefs = await this.prefs;
+      final replaysJson = prefs.getString('game_replays') ?? '[]';
+      final List<dynamic> replays = jsonDecode(replaysJson);
+      replays.removeWhere((r) => r['id'] == id);
+      await prefs.setString('game_replays', jsonEncode(replays));
+      return;
+    }
+
     final db = await database;
     await db.delete(
       'game_replays',
@@ -359,6 +623,12 @@ class DatabaseService {
   }
 
   Future<void> clearAllReplays() async {
+    if (kIsWeb) {
+      final prefs = await this.prefs;
+      await prefs.setString('game_replays', jsonEncode([]));
+      return;
+    }
+
     final db = await database;
     await db.delete('game_replays');
   }
@@ -366,17 +636,42 @@ class DatabaseService {
   // ===== LEGACY HISTORY METHODS =====
 
   Future<int> insertHistory(String result) async {
+    if (kIsWeb) {
+      final prefs = await this.prefs;
+      final historyJson = prefs.getString('history') ?? '[]';
+      final List<dynamic> history = jsonDecode(historyJson);
+
+      final int newId = history.isEmpty ? 1 : (history.map((h) => h['id'] as int).reduce((a, b) => a > b ? a : b) + 1);
+      history.insert(0, {'id': newId, 'result': result}); // Insert at beginning for DESC order
+
+      await prefs.setString('history', jsonEncode(history));
+      return newId;
+    }
+
     final db = await database;
     return await db.insert('history', {'result': result});
   }
 
   Future<List<String>> getHistory() async {
+    if (kIsWeb) {
+      final prefs = await this.prefs;
+      final historyJson = prefs.getString('history') ?? '[]';
+      final List<dynamic> decoded = jsonDecode(historyJson);
+      return decoded.map((h) => h['result'] as String).toList();
+    }
+
     final db = await database;
     final result = await db.query('history', orderBy: 'id DESC');
     return result.map((row) => row['result'] as String).toList();
   }
 
   Future<void> clearHistory() async {
+    if (kIsWeb) {
+      final prefs = await this.prefs;
+      await prefs.setString('history', jsonEncode([]));
+      return;
+    }
+
     final db = await database;
     await db.delete('history');
   }
@@ -384,6 +679,10 @@ class DatabaseService {
   // ===== DATABASE MANAGEMENT =====
 
   Future<void> close() async {
+    if (kIsWeb) {
+      // Nothing to close for shared_preferences
+      return;
+    }
     final db = await database;
     db.close();
   }
