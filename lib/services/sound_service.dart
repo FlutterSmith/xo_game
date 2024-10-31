@@ -1,4 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// Service for managing sound effects
 class SoundService {
@@ -17,6 +18,13 @@ class SoundService {
 
   Future<void> playSound(SoundType type) async {
     if (!_soundEnabled) return;
+
+    // Skip sound playback on web platform until sound files are added
+    // Web platform has issues loading MP3 files that don't exist
+    if (kIsWeb) {
+      // TODO: Add web-compatible sound files or use Web Audio API
+      return;
+    }
 
     try {
       // For now, we'll use system beep sounds since we don't have audio files yet
