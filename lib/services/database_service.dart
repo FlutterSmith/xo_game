@@ -1,7 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'dart:convert';
 import '../models/game_stats.dart';
 import '../models/app_settings.dart';
@@ -18,9 +18,15 @@ class DatabaseService {
   DatabaseService._init();
 
   Future<SharedPreferences> get prefs async {
-    if (_prefs != null) return _prefs!;
+    if (_prefs != null) {
+      debugPrint('[DB] Returning cached prefs instance');
+      return _prefs!;
+    }
+    debugPrint('[DB] Initializing SharedPreferences...');
     _prefs = await SharedPreferences.getInstance();
+    debugPrint('[DB] SharedPreferences initialized, running _initWebDefaults');
     await _initWebDefaults();
+    debugPrint('[DB] _initWebDefaults complete');
     return _prefs!;
   }
 
@@ -44,31 +50,39 @@ class DatabaseService {
   }
 
   Future<void> _initWebDefaults() async {
+    debugPrint('[DB] _initWebDefaults - Starting initialization');
     final prefs = _prefs!;
 
     // Initialize stats if not exists
     if (!prefs.containsKey('game_stats')) {
+      debugPrint('[DB] Initializing game_stats');
       await prefs.setString('game_stats', jsonEncode(GameStats.empty().toMap()));
     }
 
     // Initialize settings if not exists
     if (!prefs.containsKey('app_settings')) {
+      debugPrint('[DB] Initializing app_settings');
       await prefs.setString('app_settings', jsonEncode(AppSettings.defaultSettings().toMap()));
     }
 
     // Initialize achievements if not exists
     if (!prefs.containsKey('achievements')) {
+      debugPrint('[DB] Initializing achievements');
       await prefs.setString('achievements', jsonEncode(_getDefaultAchievements()));
     }
 
     // Initialize empty lists if not exists
     if (!prefs.containsKey('game_replays')) {
+      debugPrint('[DB] Initializing game_replays');
       await prefs.setString('game_replays', jsonEncode([]));
     }
 
     if (!prefs.containsKey('history')) {
+      debugPrint('[DB] Initializing history');
       await prefs.setString('history', jsonEncode([]));
     }
+
+    debugPrint('[DB] _initWebDefaults - Complete');
   }
 
   List<Map<String, dynamic>> _getDefaultAchievements() {
@@ -389,14 +403,28 @@ class DatabaseService {
 
   Future<AppSettings> getSettings() async {
     if (kIsWeb) {
-      final prefs = await this.prefs;
-      final settingsJson = prefs.getString('app_settings');
-      if (settingsJson == null) {
-        final defaultSettings = AppSettings.defaultSettings();
-        await prefs.setString('app_settings', jsonEncode(defaultSettings.toMap()));
-        return defaultSettings;
+      try {
+        debugPrint('[DB] getSettings - Starting on web platform');
+        final prefs = await this.prefs;
+        debugPrint('[DB] getSettings - Got prefs instance');
+        final settingsJson = prefs.getString('app_settings');
+        debugPrint('[DB] getSettings - settingsJson: $settingsJson');
+        if (settingsJson == null) {
+          final defaultSettings = AppSettings.defaultSettings();
+          final encoded = jsonEncode(defaultSettings.toMap());
+          debugPrint('[DB] Saving default settings: $encoded');
+          await prefs.setString('app_settings', encoded);
+          debugPrint('[DB] Default settings saved successfully');
+          return defaultSettings;
+        }
+        final decoded = jsonDecode(settingsJson);
+        debugPrint('[DB] Decoded settings: $decoded');
+        return AppSettings.fromMap(decoded);
+      } catch (e, stack) {
+        debugPrint('[DB] Error loading settings: $e');
+        debugPrint('[DB] Stack: $stack');
+        return AppSettings.defaultSettings();
       }
-      return AppSettings.fromMap(jsonDecode(settingsJson));
     }
 
     final db = await database;
@@ -413,8 +441,17 @@ class DatabaseService {
 
   Future<void> updateSettings(AppSettings settings) async {
     if (kIsWeb) {
-      final prefs = await this.prefs;
-      await prefs.setString('app_settings', jsonEncode(settings.toMap()));
+      try {
+        debugPrint('[DB] updateSettings - Starting on web platform');
+        final prefs = await this.prefs;
+        final encoded = jsonEncode(settings.toMap());
+        debugPrint('[DB] updateSettings - saving: $encoded');
+        final result = await prefs.setString('app_settings', encoded);
+        debugPrint('[DB] updateSettings - result: $result');
+      } catch (e, stack) {
+        debugPrint('[DB] Error updating settings: $e');
+        debugPrint('[DB] Stack: $stack');
+      }
       return;
     }
 
