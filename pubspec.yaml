@@ -23,7 +23,7 @@ dependencies:
   url_launcher: ^6.2.2
   path_provider: ^2.1.1
   intl: ^0.18.1
-  file_picker: ^6.1.1
+  file_picker: ^8.1.6
   confetti: ^0.7.0
   lottie: ^3.0.0
 
