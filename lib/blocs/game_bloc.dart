@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:advanced_xo_game/logic/board_logic_5.dart';
 import 'package:advanced_xo_game/logic/board_logic_4.dart';
 import 'package:bloc/bloc.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'game_event.dart';
 import 'game_state.dart';
 import '../utils/game_logic.dart'; // Contains checkWinner3 for 3x3
@@ -431,6 +432,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   Future<void> _saveGameReplay(
       List<String> board, String winner, String result) async {
     try {
+      debugPrint('[GameBloc] _saveGameReplay - Starting');
       final replay = GameReplay(
         id: 0, // Auto-incremented by database
         date: DateTime.now().toIso8601String(),
@@ -443,10 +445,12 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         movesCount: _moveHistory.length,
       );
 
+      debugPrint('[GameBloc] _saveGameReplay - Calling database saveReplay');
       await _db.saveReplay(replay);
-    } catch (e) {
-      // Silently handle replay save errors
-      // In production, you would log this
+      debugPrint('[GameBloc] _saveGameReplay - Successfully saved replay');
+    } catch (e, stack) {
+      debugPrint('[GameBloc] ERROR in _saveGameReplay: $e');
+      debugPrint('[GameBloc] Stack: $stack');
     }
   }
 

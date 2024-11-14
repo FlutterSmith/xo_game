@@ -35,9 +35,13 @@ class SettingsCubit extends Cubit<AppSettings> {
 
   /// Update player name
   Future<void> updatePlayerName(String name) async {
+    debugPrint('[SettingsCubit] updatePlayerName - name: $name');
     final updated = state.copyWith(playerName: name);
+    debugPrint('[SettingsCubit] updatePlayerName - calling updateSettings');
     await _db.updateSettings(updated);
+    debugPrint('[SettingsCubit] updatePlayerName - emitting updated settings');
     emit(updated);
+    debugPrint('[SettingsCubit] updatePlayerName - complete');
   }
 
   /// Toggle sound on/off
