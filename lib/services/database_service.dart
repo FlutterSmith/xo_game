@@ -53,33 +53,51 @@ class DatabaseService {
     debugPrint('[DB] _initWebDefaults - Starting initialization');
     final prefs = _prefs!;
 
+    // Debug: List all existing keys
+    final allKeys = prefs.getKeys();
+    debugPrint('[DB] _initWebDefaults - Existing keys: ${allKeys.toList()}');
+
     // Initialize stats if not exists
     if (!prefs.containsKey('game_stats')) {
       debugPrint('[DB] Initializing game_stats');
       await prefs.setString('game_stats', jsonEncode(GameStats.empty().toMap()));
+    } else {
+      debugPrint('[DB] game_stats already exists, skipping initialization');
     }
 
     // Initialize settings if not exists
     if (!prefs.containsKey('app_settings')) {
       debugPrint('[DB] Initializing app_settings');
       await prefs.setString('app_settings', jsonEncode(AppSettings.defaultSettings().toMap()));
+    } else {
+      debugPrint('[DB] app_settings already exists, skipping initialization');
+      final existing = prefs.getString('app_settings');
+      debugPrint('[DB] Existing app_settings: $existing');
     }
 
     // Initialize achievements if not exists
     if (!prefs.containsKey('achievements')) {
       debugPrint('[DB] Initializing achievements');
       await prefs.setString('achievements', jsonEncode(_getDefaultAchievements()));
+    } else {
+      debugPrint('[DB] achievements already exists, skipping initialization');
     }
 
     // Initialize empty lists if not exists
     if (!prefs.containsKey('game_replays')) {
       debugPrint('[DB] Initializing game_replays');
       await prefs.setString('game_replays', jsonEncode([]));
+    } else {
+      final replaysJson = prefs.getString('game_replays');
+      final count = (jsonDecode(replaysJson!) as List).length;
+      debugPrint('[DB] game_replays already exists with $count replays, skipping initialization');
     }
 
     if (!prefs.containsKey('history')) {
       debugPrint('[DB] Initializing history');
       await prefs.setString('history', jsonEncode([]));
+    } else {
+      debugPrint('[DB] history already exists, skipping initialization');
     }
 
     debugPrint('[DB] _initWebDefaults - Complete');
