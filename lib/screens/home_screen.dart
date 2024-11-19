@@ -590,6 +590,7 @@ class HomeScreen extends StatelessWidget {
                         return DropdownMenuItem(
                           value: mode,
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
                                 mode == GameMode.PvP
