@@ -71,8 +71,6 @@ class _AdvancedNeumorphicButtonState extends State<AdvancedNeumorphicButton>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
