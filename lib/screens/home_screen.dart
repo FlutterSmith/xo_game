@@ -600,11 +600,8 @@ class HomeScreen extends StatelessWidget {
                                 color: const Color(0xFF8b5cf6),
                               ),
                               const SizedBox(width: 8),
-                              Flexible(
-                                child: Text(
-                                  mode == GameMode.PvP ? 'Player vs Player' : 'Player vs AI',
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                              Text(
+                                mode == GameMode.PvP ? 'P vs P' : 'P vs PC',
                               ),
                             ],
                           ),
