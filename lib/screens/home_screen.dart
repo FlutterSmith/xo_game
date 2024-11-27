@@ -651,7 +651,7 @@ class HomeScreen extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                         fontFamily: 'Raleway',
                       ),
-                      items: AIDifficulty.values.where((d) => d != AIDifficulty.adaptive).map((diff) {
+                      items: AIDifficulty.values.where((d) => d != AIDifficulty.impossible).map((diff) {
                         final label = diff.name.toUpperCase();
                         return DropdownMenuItem(
                           value: diff,
@@ -724,7 +724,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                       child: DropdownButton<int>(
-                        value: state.timeLimit,
+                        value: state.totalGameTime,
                         dropdownColor: isDark ? const Color(0xFF1e1436) : Colors.white,
                         icon: Icon(
                           Icons.keyboard_arrow_down_rounded,

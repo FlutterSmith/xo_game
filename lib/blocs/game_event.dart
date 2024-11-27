@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 enum GameMode { PvP, PvC }
-enum AIDifficulty { easy, medium, hard, adaptive }
+enum AIDifficulty { easy, medium, hard, impossible }
 
 abstract class GameEvent extends Equatable {
   const GameEvent();

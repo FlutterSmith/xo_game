@@ -121,7 +121,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         undoStack: newUndoStack,
         redoStack: [],
         aiMessage: "",
-        timeRemaining: state.timeLimit, // Reset timer
+        // TODO: Implement full-game timer logic in Phase 4
         isTimerActive: state.timedMode, // Activate timer if in timed mode
       ));
       if (state.gameMode == GameMode.PvC && nextPlayer == 'O') {
@@ -306,7 +306,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         return _minimaxMove(board, aiPlayer, humanPlayer, 3);
       } else if (difficulty == AIDifficulty.medium) {
         return _minimaxMove(board, aiPlayer, humanPlayer, 2);
-      } else if (difficulty == AIDifficulty.adaptive) {
+      } else if (difficulty == AIDifficulty.impossible) {
         int available = board.where((e) => e == '').length;
         int depthLimit = available < 5 ? available : 3;
         return _minimaxMove(board, aiPlayer, humanPlayer, depthLimit);
@@ -319,7 +319,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         return _minimaxMove(board, aiPlayer, humanPlayer, 4);
       } else if (difficulty == AIDifficulty.medium) {
         return _minimaxMove(board, aiPlayer, humanPlayer, 2);
-      } else if (difficulty == AIDifficulty.adaptive) {
+      } else if (difficulty == AIDifficulty.impossible) {
         int available = board.where((e) => e == '').length;
         int depthLimit = available < 5 ? available : 4;
         return _minimaxMove(board, aiPlayer, humanPlayer, depthLimit);
@@ -335,7 +335,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
           return _minimaxMove(board, aiPlayer, humanPlayer, 2);
         case AIDifficulty.hard:
           return _minimaxMove(board, aiPlayer, humanPlayer, board.length);
-        case AIDifficulty.adaptive:
+        case AIDifficulty.impossible:
           int available = board.where((e) => e == '').length;
           int depthLimit = available < 5 ? available : 3;
           return _minimaxMove(board, aiPlayer, humanPlayer, depthLimit);
@@ -453,33 +453,36 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   // Timer event handlers
+  // TODO: Implement full-game timer logic in Phase 4
   FutureOr<void> _onToggleTimedMode(ToggleTimedMode event, Emitter<GameState> emit) {
     emit(state.copyWith(
       timedMode: !state.timedMode,
-      timeRemaining: state.timeLimit,
+      elapsedTime: 0,
       isTimerActive: false,
     ));
   }
 
   FutureOr<void> _onSetTimeLimit(SetTimeLimit event, Emitter<GameState> emit) {
     emit(state.copyWith(
-      timeLimit: event.seconds,
-      timeRemaining: event.seconds,
+      totalGameTime: event.seconds,
+      elapsedTime: 0,
     ));
   }
 
   FutureOr<void> _onTimerTick(TimerTick event, Emitter<GameState> emit) {
     if (!state.timedMode || !state.isTimerActive || state.gameOver) return null;
 
-    final newTime = state.timeRemaining - 1;
+    // Increment elapsed time by 100ms (timer ticks every 100ms)
+    final newElapsedTime = state.elapsedTime + 100;
 
-    if (newTime <= 0) {
+    // Check if total game time exceeded (convert seconds to milliseconds)
+    if (newElapsedTime >= state.totalGameTime * 1000) {
       // Time's up! Handle timeout
       add(const TimeoutMove());
       return null;
     }
 
-    emit(state.copyWith(timeRemaining: newTime));
+    emit(state.copyWith(elapsedTime: newElapsedTime));
     return null;
   }
 

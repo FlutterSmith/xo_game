@@ -33,8 +33,9 @@ class GameState extends Equatable {
   final int winCondition;
   final String aiMessage;
   final bool timedMode;
-  final int timeLimit; // seconds per move
-  final int timeRemaining; // current countdown
+  final int totalGameTime; // TOTAL time for entire game in seconds (e.g., 10s, 20s, 30s, 60s)
+  final int elapsedTime; // Time elapsed since game start in milliseconds
+  final bool isGamePaused; // Whether game is paused
   final bool isTimerActive;
 
   const GameState({
@@ -52,8 +53,9 @@ class GameState extends Equatable {
     required this.winCondition,
     required this.aiMessage,
     required this.timedMode,
-    required this.timeLimit,
-    required this.timeRemaining,
+    required this.totalGameTime,
+    required this.elapsedTime,
+    required this.isGamePaused,
     required this.isTimerActive,
   });
 
@@ -68,14 +70,15 @@ class GameState extends Equatable {
       undoStack: [],
       redoStack: [],
       gameMode: GameMode.PvC, // Default to Player vs Computer
-      aiDifficulty: AIDifficulty.hard,
+      aiDifficulty: AIDifficulty.medium,
       gameHistory: [],
       boardSize: size,
       winCondition: size,
       aiMessage: '',
       timedMode: false,
-      timeLimit: 30, // Default 30 seconds
-      timeRemaining: 30,
+      totalGameTime: 30, // Default 30 seconds for ENTIRE game
+      elapsedTime: 0, // No time elapsed initially
+      isGamePaused: false,
       isTimerActive: false,
     );
   }
@@ -95,8 +98,9 @@ class GameState extends Equatable {
     int? winCondition,
     String? aiMessage,
     bool? timedMode,
-    int? timeLimit,
-    int? timeRemaining,
+    int? totalGameTime,
+    int? elapsedTime,
+    bool? isGamePaused,
     bool? isTimerActive,
   }) {
     return GameState(
@@ -114,8 +118,9 @@ class GameState extends Equatable {
       winCondition: winCondition ?? this.winCondition,
       aiMessage: aiMessage ?? this.aiMessage,
       timedMode: timedMode ?? this.timedMode,
-      timeLimit: timeLimit ?? this.timeLimit,
-      timeRemaining: timeRemaining ?? this.timeRemaining,
+      totalGameTime: totalGameTime ?? this.totalGameTime,
+      elapsedTime: elapsedTime ?? this.elapsedTime,
+      isGamePaused: isGamePaused ?? this.isGamePaused,
       isTimerActive: isTimerActive ?? this.isTimerActive,
     );
   }
@@ -136,8 +141,9 @@ class GameState extends Equatable {
         winCondition,
         aiMessage,
         timedMode,
-        timeLimit,
-        timeRemaining,
+        totalGameTime,
+        elapsedTime,
+        isGamePaused,
         isTimerActive,
       ];
 }
