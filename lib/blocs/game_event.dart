@@ -80,6 +80,14 @@ class TimerTick extends GameEvent {
   const TimerTick();
 }
 
+class PauseTimer extends GameEvent {
+  const PauseTimer();
+}
+
+class ResumeTimer extends GameEvent {
+  const ResumeTimer();
+}
+
 class TimeoutMove extends GameEvent {
   const TimeoutMove();
 }

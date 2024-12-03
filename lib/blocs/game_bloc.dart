@@ -35,6 +35,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<ToggleTimedMode>(_onToggleTimedMode);
     on<SetTimeLimit>(_onSetTimeLimit);
     on<TimerTick>(_onTimerTick);
+    on<PauseTimer>(_onPauseTimer);
+    on<ResumeTimer>(_onResumeTimer);
     on<TimeoutMove>(_onTimeoutMove);
     _vibrationService.initialize();
   }
@@ -483,6 +485,18 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     }
 
     emit(state.copyWith(elapsedTime: newElapsedTime));
+    return null;
+  }
+
+  FutureOr<void> _onPauseTimer(PauseTimer event, Emitter<GameState> emit) {
+    if (!state.timedMode || state.gameOver) return null;
+    emit(state.copyWith(isTimerActive: false));
+    return null;
+  }
+
+  FutureOr<void> _onResumeTimer(ResumeTimer event, Emitter<GameState> emit) {
+    if (!state.timedMode || state.gameOver) return null;
+    emit(state.copyWith(isTimerActive: true));
     return null;
   }
 
