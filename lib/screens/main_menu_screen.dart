@@ -4,6 +4,7 @@ import '../blocs/theme_cubit.dart';
 import '../blocs/settings_cubit.dart';
 import '../blocs/statistics_cubit.dart';
 import '../models/app_settings.dart';
+import '../models/game_stats.dart';
 
 /// Main Menu Screen - Professional game entry point
 class MainMenuScreen extends StatefulWidget {
@@ -196,10 +197,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                   const SizedBox(height: 40),
 
                   // Quick Stats
-                  BlocBuilder<StatisticsCubit, Map<String, dynamic>>(
+                  BlocBuilder<StatisticsCubit, GameStats>(
                     builder: (context, stats) {
-                      final totalGames = stats['totalGames'] ?? 0;
-                      final wins = stats['wins'] ?? 0;
+                      final totalGames = stats.totalGames;
+                      final wins = stats.wins;
                       final winRate = totalGames > 0
                           ? ((wins / totalGames) * 100).toStringAsFixed(1)
                           : '0.0';
