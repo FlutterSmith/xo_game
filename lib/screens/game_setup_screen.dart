@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/game_bloc.dart';
 import '../blocs/game_event.dart';
-import '../blocs/game_state.dart';
-import '../blocs/settings_cubit.dart';
 
 /// Game Setup Screen - Configure game before playing
 class GameSetupScreen extends StatefulWidget {
@@ -14,38 +12,12 @@ class GameSetupScreen extends StatefulWidget {
 }
 
 class _GameSetupScreenState extends State<GameSetupScreen> {
-  late int selectedBoardSize;
+  int selectedBoardSize = 3;
   GameMode selectedGameMode = GameMode.PvC;
-  late AIDifficulty selectedDifficulty;
+  AIDifficulty selectedDifficulty = AIDifficulty.medium;
   bool timedMode = false;
   int timeLimit = 30;
   String playerSide = 'X';
-
-  @override
-  void initState() {
-    super.initState();
-    // Load defaults from settings
-    final settings = context.read<SettingsCubit>().state;
-    selectedBoardSize = settings.defaultBoardSize;
-
-    // Map string difficulty to enum
-    switch (settings.aiDifficulty.toLowerCase()) {
-      case 'easy':
-        selectedDifficulty = AIDifficulty.easy;
-        break;
-      case 'medium':
-        selectedDifficulty = AIDifficulty.medium;
-        break;
-      case 'hard':
-        selectedDifficulty = AIDifficulty.hard;
-        break;
-      case 'impossible':
-        selectedDifficulty = AIDifficulty.impossible;
-        break;
-      default:
-        selectedDifficulty = AIDifficulty.medium;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

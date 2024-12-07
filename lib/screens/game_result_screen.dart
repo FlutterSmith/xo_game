@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/game_bloc.dart';
@@ -6,6 +7,8 @@ import '../blocs/game_state.dart';
 import '../blocs/game_event.dart';
 import '../blocs/statistics_cubit.dart';
 import '../services/achievement_service.dart';
+import '../services/database_service.dart';
+import '../models/game_replay.dart';
 import 'package:confetti/confetti.dart';
 
 /// Game Result Screen - Dramatic win/loss/draw display
@@ -58,19 +61,21 @@ class _GameResultScreenState extends State<GameResultScreen>
     final statisticsCubit = context.read<StatisticsCubit>();
     final achievementService = AchievementService();
 
-    Future.delayed(const Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 100), () async {
       final gameState = gameBloc.state;
 
       // Determine game result
       String result;
+      String winner;
       final isDraw = gameState.resultMessage.toLowerCase().contains('draw');
       if (isDraw) {
         result = 'draw';
+        winner = 'Draw';
       } else {
         // Extract winner from result message (e.g., "Winner: X" -> "X")
         final winnerMatch = RegExp(r'Winner: ([XO])').firstMatch(gameState.resultMessage);
         if (winnerMatch != null) {
-          final winner = winnerMatch.group(1)!;
+          winner = winnerMatch.group(1)!;
           if (gameState.gameMode == GameMode.PvP) {
             result = 'win'; // In PvP, any win counts
           } else {
@@ -79,6 +84,7 @@ class _GameResultScreenState extends State<GameResultScreen>
           }
         } else {
           result = 'draw'; // Fallback
+          winner = 'Draw';
         }
       }
 
@@ -92,9 +98,66 @@ class _GameResultScreenState extends State<GameResultScreen>
         boardSize: gameState.boardSize,
       );
 
+      // Save game replay
+      try {
+        final replay = GameReplay(
+          id: 0, // Will be assigned by database
+          date: DateTime.now().toIso8601String(),
+          gameMode: gameState.gameMode == GameMode.PvP ? 'PvP' : 'PvC',
+          difficulty: gameState.gameMode == GameMode.PvC
+              ? gameState.aiDifficulty.toString().split('.').last
+              : 'N/A',
+          boardSize: gameState.boardSize,
+          moves: jsonEncode(gameState.gameHistory),
+          result: winner == 'Draw' ? 'Draw' : '$winner Wins',
+          winner: winner,
+          movesCount: gameState.board.where((cell) => cell.isNotEmpty).length,
+        );
+        await DatabaseService.instance.saveReplay(replay);
+
+        // Also save to legacy history
+        await DatabaseService.instance.insertHistory(gameState.resultMessage);
+      } catch (e) {
+        debugPrint('Error saving game replay: $e');
+      }
+
       // Check for newly unlocked achievements
-      statisticsCubit.state; // Get updated stats
-      achievementService.checkAchievements(statisticsCubit.state);
+      final stats = statisticsCubit.state;
+      final newlyUnlocked = await achievementService.checkAchievements(stats);
+
+      // Show notification for newly unlocked achievements
+      if (mounted && newlyUnlocked.isNotEmpty) {
+        for (var achievement in newlyUnlocked) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Text(
+                    achievement.icon,
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Achievement Unlocked!',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Text(achievement.title),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: const Color(0xFF16f2b3),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      }
 
       // Trigger confetti for wins
       if (result == 'win') {

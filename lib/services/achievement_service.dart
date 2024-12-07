@@ -47,6 +47,12 @@ class AchievementService {
         return stats.board3x3Games > 0 &&
             stats.board4x4Games > 0 &&
             stats.board5x5Games > 0;
+      case 'win_streak_5':
+        // TODO: Requires win streak tracking in GameStats
+        return false;
+      case 'perfect_game':
+        // TODO: Requires perfect game tracking in GameStats
+        return false;
       default:
         return false;
     }
