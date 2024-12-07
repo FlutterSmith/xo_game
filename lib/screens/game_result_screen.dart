@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/game_bloc.dart';
 import '../blocs/game_state.dart';
 import '../blocs/game_event.dart';
+import '../blocs/statistics_cubit.dart';
+import '../services/achievement_service.dart';
 import 'package:confetti/confetti.dart';
 
 /// Game Result Screen - Dramatic win/loss/draw display
@@ -50,11 +52,49 @@ class _GameResultScreenState extends State<GameResultScreen>
 
     _animationController.forward();
 
-    // Trigger confetti for wins
-    Future.delayed(const Duration(milliseconds: 400), () {
-      final state = context.read<GameBloc>().state;
-      if (state.resultMessage.toLowerCase().contains('wins') &&
-          !state.resultMessage.toLowerCase().contains('o wins')) {
+    // Record statistics and check achievements
+    Future.delayed(const Duration(milliseconds: 100), () {
+      final gameState = context.read<GameBloc>().state;
+      final statisticsCubit = context.read<StatisticsCubit>();
+      final achievementService = AchievementService();
+
+      // Determine game result
+      String result;
+      final isDraw = gameState.resultMessage.toLowerCase().contains('draw');
+      if (isDraw) {
+        result = 'draw';
+      } else {
+        // Extract winner from result message (e.g., "Winner: X" -> "X")
+        final winnerMatch = RegExp(r'Winner: ([XO])').firstMatch(gameState.resultMessage);
+        if (winnerMatch != null) {
+          final winner = winnerMatch.group(1)!;
+          if (gameState.gameMode == GameMode.PvP) {
+            result = 'win'; // In PvP, any win counts
+          } else {
+            // In PvC, check if winner matches player side
+            result = winner == gameState.playerSide ? 'win' : 'loss';
+          }
+        } else {
+          result = 'draw'; // Fallback
+        }
+      }
+
+      // Record game in statistics
+      statisticsCubit.recordGame(
+        result: result,
+        gameMode: gameState.gameMode == GameMode.PvP ? 'PvP' : 'PvC',
+        difficulty: gameState.gameMode == GameMode.PvC
+            ? gameState.aiDifficulty.toString().split('.').last
+            : null,
+        boardSize: gameState.boardSize,
+      );
+
+      // Check for newly unlocked achievements
+      statisticsCubit.state; // Get updated stats
+      achievementService.checkAchievements(statisticsCubit.state);
+
+      // Trigger confetti for wins
+      if (result == 'win') {
         _confettiController.play();
       }
     });
@@ -74,10 +114,24 @@ class _GameResultScreenState extends State<GameResultScreen>
     return BlocBuilder<GameBloc, GameState>(
       builder: (context, state) {
         // Determine result type
-        final isWin = state.resultMessage.toLowerCase().contains('wins') &&
-            !state.resultMessage.toLowerCase().contains('o wins');
         final isDraw = state.resultMessage.toLowerCase().contains('draw');
-        final isLoss = !isWin && !isDraw;
+        bool isWin = false;
+        bool isLoss = false;
+
+        if (!isDraw) {
+          // Extract winner from result message (e.g., "Winner: X" -> "X")
+          final winnerMatch = RegExp(r'Winner: ([XO])').firstMatch(state.resultMessage);
+          if (winnerMatch != null) {
+            final winner = winnerMatch.group(1)!;
+            if (state.gameMode == GameMode.PvP) {
+              isWin = true; // In PvP, any win is displayed as a win
+            } else {
+              // In PvC, check if winner matches player side
+              isWin = winner == state.playerSide;
+              isLoss = !isWin;
+            }
+          }
+        }
 
         Color resultColor;
         IconData resultIcon;

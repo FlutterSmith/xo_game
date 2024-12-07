@@ -37,6 +37,7 @@ class GameState extends Equatable {
   final int elapsedTime; // Time elapsed since game start in milliseconds
   final bool isGamePaused; // Whether game is paused
   final bool isTimerActive;
+  final String playerSide; // 'X' or 'O' - which side the player chose
 
   const GameState({
     required this.board,
@@ -57,6 +58,7 @@ class GameState extends Equatable {
     required this.elapsedTime,
     required this.isGamePaused,
     required this.isTimerActive,
+    required this.playerSide,
   });
 
   factory GameState.initial() {
@@ -80,6 +82,7 @@ class GameState extends Equatable {
       elapsedTime: 0, // No time elapsed initially
       isGamePaused: false,
       isTimerActive: false,
+      playerSide: 'X', // Default: player plays as X
     );
   }
 
@@ -102,6 +105,7 @@ class GameState extends Equatable {
     int? elapsedTime,
     bool? isGamePaused,
     bool? isTimerActive,
+    String? playerSide,
   }) {
     return GameState(
       board: board ?? this.board,
@@ -122,6 +126,7 @@ class GameState extends Equatable {
       elapsedTime: elapsedTime ?? this.elapsedTime,
       isGamePaused: isGamePaused ?? this.isGamePaused,
       isTimerActive: isTimerActive ?? this.isTimerActive,
+      playerSide: playerSide ?? this.playerSide,
     );
   }
 
@@ -145,5 +150,6 @@ class GameState extends Equatable {
         elapsedTime,
         isGamePaused,
         isTimerActive,
+        playerSide,
       ];
 }
