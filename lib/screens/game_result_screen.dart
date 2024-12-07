@@ -53,10 +53,13 @@ class _GameResultScreenState extends State<GameResultScreen>
     _animationController.forward();
 
     // Record statistics and check achievements
+    // Get cubits before async gap to avoid context issues
+    final gameBloc = context.read<GameBloc>();
+    final statisticsCubit = context.read<StatisticsCubit>();
+    final achievementService = AchievementService();
+
     Future.delayed(const Duration(milliseconds: 100), () {
-      final gameState = context.read<GameBloc>().state;
-      final statisticsCubit = context.read<StatisticsCubit>();
-      final achievementService = AchievementService();
+      final gameState = gameBloc.state;
 
       // Determine game result
       String result;
@@ -116,7 +119,6 @@ class _GameResultScreenState extends State<GameResultScreen>
         // Determine result type
         final isDraw = state.resultMessage.toLowerCase().contains('draw');
         bool isWin = false;
-        bool isLoss = false;
 
         if (!isDraw) {
           // Extract winner from result message (e.g., "Winner: X" -> "X")
@@ -128,7 +130,6 @@ class _GameResultScreenState extends State<GameResultScreen>
             } else {
               // In PvC, check if winner matches player side
               isWin = winner == state.playerSide;
-              isLoss = !isWin;
             }
           }
         }
