@@ -48,11 +48,9 @@ class AchievementService {
             stats.board4x4Games > 0 &&
             stats.board5x5Games > 0;
       case 'win_streak_5':
-        // TODO: Requires win streak tracking in GameStats
-        return false;
+        return stats.longestWinStreak >= 5;
       case 'perfect_game':
-        // TODO: Requires perfect game tracking in GameStats
-        return false;
+        return stats.perfectGames >= 1;
       default:
         return false;
     }

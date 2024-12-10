@@ -21,6 +21,9 @@ class GameStats {
   final int board3x3Games;
   final int board4x4Games;
   final int board5x5Games;
+  final int currentWinStreak; // Current consecutive wins
+  final int longestWinStreak; // Best win streak ever
+  final int perfectGames; // Games won without opponent scoring
   final String lastUpdated;
 
   GameStats({
@@ -45,6 +48,9 @@ class GameStats {
     required this.board3x3Games,
     required this.board4x4Games,
     required this.board5x5Games,
+    required this.currentWinStreak,
+    required this.longestWinStreak,
+    required this.perfectGames,
     required this.lastUpdated,
   });
 
@@ -71,6 +77,9 @@ class GameStats {
       'board3x3Games': board3x3Games,
       'board4x4Games': board4x4Games,
       'board5x5Games': board5x5Games,
+      'currentWinStreak': currentWinStreak,
+      'longestWinStreak': longestWinStreak,
+      'perfectGames': perfectGames,
       'lastUpdated': lastUpdated,
     };
   }
@@ -98,6 +107,9 @@ class GameStats {
       board3x3Games: map['board3x3Games'] as int,
       board4x4Games: map['board4x4Games'] as int,
       board5x5Games: map['board5x5Games'] as int,
+      currentWinStreak: (map['currentWinStreak'] as int?) ?? 0,
+      longestWinStreak: (map['longestWinStreak'] as int?) ?? 0,
+      perfectGames: (map['perfectGames'] as int?) ?? 0,
       lastUpdated: map['lastUpdated'] as String,
     );
   }
@@ -125,6 +137,9 @@ class GameStats {
       board3x3Games: 0,
       board4x4Games: 0,
       board5x5Games: 0,
+      currentWinStreak: 0,
+      longestWinStreak: 0,
+      perfectGames: 0,
       lastUpdated: DateTime.now().toIso8601String(),
     );
   }
