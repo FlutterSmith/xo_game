@@ -67,20 +67,6 @@ class SettingsCubit extends Cubit<AppSettings> {
     emit(updated);
   }
 
-  /// Update AI difficulty
-  Future<void> updateAIDifficulty(String difficulty) async {
-    final updated = state.copyWith(aiDifficulty: difficulty);
-    await _db.updateSettings(updated);
-    emit(updated);
-  }
-
-  /// Update default board size
-  Future<void> updateDefaultBoardSize(int size) async {
-    final updated = state.copyWith(defaultBoardSize: size);
-    await _db.updateSettings(updated);
-    emit(updated);
-  }
-
   /// Mark tutorial as completed
   Future<void> completeTutorial() async {
     final updated = state.copyWith(showTutorial: false);
