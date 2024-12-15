@@ -384,13 +384,20 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   FutureOr<void> _onSetPlayerSide(
-      SetPlayerSide event, Emitter<GameState> emit) {
-    // Update the current player and playerSide based on the chosen side.
+      SetPlayerSide event, Emitter<GameState> emit) async {
+    // Update playerSide to track which side the player chose.
+    // Note: currentPlayer should always start as 'X' since X goes first in Tic Tac Toe,
+    // regardless of which side the player selected.
     emit(state.copyWith(
-      currentPlayer: event.side,
       playerSide: event.side,
     ));
-    return null;
+
+    // If player chose 'O', and game mode is PvC, AI (playing as 'X') should make first move
+    if (event.side == 'O' && state.gameMode == GameMode.PvC && !state.gameOver) {
+      // Add a small delay for better UX
+      await Future.delayed(const Duration(milliseconds: 500));
+      add(const AITurn());
+    }
   }
 
   int _minimax(List<String> board, int depth, bool isMaximizing,
