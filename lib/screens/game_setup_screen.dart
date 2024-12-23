@@ -584,11 +584,10 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
   void _startGame() {
     final gameBloc = context.read<GameBloc>();
 
-    // Reset game first to ensure clean slate
-    gameBloc.add(const ResetGame());
-
-    // Then apply all settings
-    gameBloc.add(UpdateBoardSettings(selectedBoardSize, selectedBoardSize));
+    // Apply board settings (this also resets the game state)
+    // Win conditions: 3x3 needs 3 in a row, 4x4 needs 4, 5x5 needs 4
+    final winCondition = selectedBoardSize == 3 ? 3 : 4;
+    gameBloc.add(UpdateBoardSettings(selectedBoardSize, winCondition));
     gameBloc.add(ChangeDifficulty(selectedDifficulty));
     gameBloc.add(SetPlayerSide(playerSide));
 
