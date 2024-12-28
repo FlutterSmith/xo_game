@@ -581,13 +581,17 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
     );
   }
 
-  void _startGame() {
+  Future<void> _startGame() async {
     final gameBloc = context.read<GameBloc>();
 
     // Apply board settings (this also resets the game state)
     // Win conditions: 3x3 needs 3 in a row, 4x4 needs 4, 5x5 needs 4
     final winCondition = selectedBoardSize == 3 ? 3 : 4;
     gameBloc.add(UpdateBoardSettings(selectedBoardSize, winCondition));
+
+    // Wait for board size to be updated before navigating
+    await gameBloc.stream.firstWhere((state) => state.boardSize == selectedBoardSize);
+
     gameBloc.add(ChangeDifficulty(selectedDifficulty));
     gameBloc.add(SetPlayerSide(playerSide));
 
