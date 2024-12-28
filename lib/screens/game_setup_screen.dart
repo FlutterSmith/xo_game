@@ -581,17 +581,13 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
     );
   }
 
-  Future<void> _startGame() async {
+  void _startGame() {
     final gameBloc = context.read<GameBloc>();
 
     // Apply board settings (this also resets the game state)
     // Win conditions: 3x3 needs 3 in a row, 4x4 needs 4, 5x5 needs 4
     final winCondition = selectedBoardSize == 3 ? 3 : 4;
     gameBloc.add(UpdateBoardSettings(selectedBoardSize, winCondition));
-
-    // Wait for board size to be updated before navigating
-    await gameBloc.stream.firstWhere((state) => state.boardSize == selectedBoardSize);
-
     gameBloc.add(ChangeDifficulty(selectedDifficulty));
     gameBloc.add(SetPlayerSide(playerSide));
 
@@ -600,7 +596,11 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
       gameBloc.add(SetTimeLimit(timeLimit));
     }
 
-    // Navigate to game play
-    Navigator.of(context).pushReplacementNamed('/game-play');
+    // Small delay to ensure events are processed before navigation
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed('/game-play');
+      }
+    });
   }
 }
