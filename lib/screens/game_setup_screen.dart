@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/game_bloc.dart';
 import '../blocs/game_event.dart';
+import '../blocs/game_state.dart';
 
 /// Game Setup Screen - Configure game before playing
 class GameSetupScreen extends StatefulWidget {
