@@ -275,8 +275,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   FutureOr<void> _onChangeDifficulty(
       ChangeDifficulty event, Emitter<GameState> emit) {
-    emit(GameState.initial().copyWith(
-      gameMode: state.gameMode,
+    emit(state.copyWith(
       aiDifficulty: event.difficulty,
     ));
     return null;
