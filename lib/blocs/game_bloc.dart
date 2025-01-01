@@ -44,6 +44,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   FutureOr<void> _onMoveMade(MoveMade event, Emitter<GameState> emit) async {
     if (state.gameOver || state.board[event.index] != '') return;
 
+    // In PvC mode, only allow moves when it's the player's turn
+    if (state.gameMode == GameMode.PvC && state.currentPlayer != state.playerSide) {
+      return; // It's not the player's turn
+    }
+
     // Play sound and vibration feedback
     _soundService.playMove();
     _vibrationService.medium();

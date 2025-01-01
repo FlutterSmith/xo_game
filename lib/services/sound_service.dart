@@ -94,6 +94,11 @@ class SoundService {
   Future<void> playBackgroundMusic() async {
     if (!_musicEnabled || kIsWeb) return;
 
+    // Stop any currently playing music first to prevent overlap
+    if (_isMusicPlaying) {
+      await stopMusic();
+    }
+
     try {
       await _musicPlayer.setReleaseMode(ReleaseMode.loop);
       await _musicPlayer.setVolume(0.3); // 30% volume for background music
