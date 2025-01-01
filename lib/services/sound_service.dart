@@ -1,19 +1,33 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-/// Service for managing sound effects
+/// Service for managing sound effects and background music
 class SoundService {
   static final SoundService _instance = SoundService._internal();
   factory SoundService() => _instance;
   SoundService._internal();
 
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioPlayer _musicPlayer = AudioPlayer();
   bool _soundEnabled = true;
+  bool _musicEnabled = true;
+  bool _isMusicPlaying = false;
 
   bool get soundEnabled => _soundEnabled;
+  bool get musicEnabled => _musicEnabled;
+  bool get isMusicPlaying => _isMusicPlaying;
 
   void setSoundEnabled(bool enabled) {
     _soundEnabled = enabled;
+  }
+
+  void setMusicEnabled(bool enabled) {
+    _musicEnabled = enabled;
+    if (!enabled && _isMusicPlaying) {
+      stopMusic();
+    } else if (enabled && !_isMusicPlaying) {
+      playBackgroundMusic();
+    }
   }
 
   Future<void> playSound(SoundType type) async {
@@ -76,8 +90,49 @@ class SoundService {
   /// Play undo sound
   Future<void> playUndo() async => playSound(SoundType.undo);
 
+  /// Play background music (looping)
+  Future<void> playBackgroundMusic() async {
+    if (!_musicEnabled || kIsWeb) return;
+
+    try {
+      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
+      await _musicPlayer.setVolume(0.3); // 30% volume for background music
+      await _musicPlayer.play(AssetSource('sounds/music/background.mp3'));
+      _isMusicPlaying = true;
+    } catch (e) {
+      // Silently fail if music cannot be played
+      _isMusicPlaying = false;
+    }
+  }
+
+  /// Pause background music
+  Future<void> pauseMusic() async {
+    await _musicPlayer.pause();
+    _isMusicPlaying = false;
+  }
+
+  /// Resume background music
+  Future<void> resumeMusic() async {
+    if (_musicEnabled) {
+      await _musicPlayer.resume();
+      _isMusicPlaying = true;
+    }
+  }
+
+  /// Stop background music
+  Future<void> stopMusic() async {
+    await _musicPlayer.stop();
+    _isMusicPlaying = false;
+  }
+
+  /// Set music volume (0.0 to 1.0)
+  Future<void> setMusicVolume(double volume) async {
+    await _musicPlayer.setVolume(volume);
+  }
+
   void dispose() {
     _audioPlayer.dispose();
+    _musicPlayer.dispose();
   }
 }
 

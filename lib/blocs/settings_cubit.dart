@@ -22,6 +22,7 @@ class SettingsCubit extends Cubit<AppSettings> {
       final settings = await _db.getSettings();
       debugPrint('[SettingsCubit] loadSettings - Got settings: ${settings.playerName}');
       _soundService.setSoundEnabled(settings.soundEnabled);
+      _soundService.setMusicEnabled(settings.musicEnabled);
       _vibrationService.setVibrationEnabled(settings.vibrationEnabled);
       emit(settings);
       debugPrint('[SettingsCubit] loadSettings - Settings emitted successfully');
@@ -48,6 +49,14 @@ class SettingsCubit extends Cubit<AppSettings> {
   Future<void> toggleSound() async {
     final updated = state.copyWith(soundEnabled: !state.soundEnabled);
     _soundService.setSoundEnabled(updated.soundEnabled);
+    await _db.updateSettings(updated);
+    emit(updated);
+  }
+
+  /// Toggle music on/off
+  Future<void> toggleMusic() async {
+    final updated = state.copyWith(musicEnabled: !state.musicEnabled);
+    _soundService.setMusicEnabled(updated.musicEnabled);
     await _db.updateSettings(updated);
     emit(updated);
   }

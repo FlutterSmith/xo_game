@@ -3,6 +3,7 @@ class AppSettings {
   final int id;
   final String playerName;
   final bool soundEnabled;
+  final bool musicEnabled;
   final bool vibrationEnabled;
   final String themeMode; // 'light', 'dark', 'system'
   final bool showTutorial; // Show tutorial on next launch
@@ -12,6 +13,7 @@ class AppSettings {
     required this.id,
     required this.playerName,
     required this.soundEnabled,
+    required this.musicEnabled,
     required this.vibrationEnabled,
     required this.themeMode,
     required this.showTutorial,
@@ -23,6 +25,7 @@ class AppSettings {
       'id': id,
       'playerName': playerName,
       'soundEnabled': soundEnabled ? 1 : 0,
+      'musicEnabled': musicEnabled ? 1 : 0,
       'vibrationEnabled': vibrationEnabled ? 1 : 0,
       'themeMode': themeMode,
       'showTutorial': showTutorial ? 1 : 0,
@@ -43,6 +46,7 @@ class AppSettings {
       id: map['id'] as int,
       playerName: map['playerName'] as String,
       soundEnabled: _toBool(map['soundEnabled']),
+      musicEnabled: map.containsKey('musicEnabled') ? _toBool(map['musicEnabled']) : true,
       vibrationEnabled: _toBool(map['vibrationEnabled']),
       themeMode: map['themeMode'] as String,
       showTutorial: _toBool(map['showTutorial']),
@@ -55,6 +59,7 @@ class AppSettings {
       id: 1,
       playerName: 'Player',
       soundEnabled: true,
+      musicEnabled: true,
       vibrationEnabled: true,
       themeMode: 'dark',
       showTutorial: true,
@@ -66,6 +71,7 @@ class AppSettings {
     int? id,
     String? playerName,
     bool? soundEnabled,
+    bool? musicEnabled,
     bool? vibrationEnabled,
     String? themeMode,
     bool? showTutorial,
@@ -75,6 +81,7 @@ class AppSettings {
       id: id ?? this.id,
       playerName: playerName ?? this.playerName,
       soundEnabled: soundEnabled ?? this.soundEnabled,
+      musicEnabled: musicEnabled ?? this.musicEnabled,
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
       themeMode: themeMode ?? this.themeMode,
       showTutorial: showTutorial ?? this.showTutorial,

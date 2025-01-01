@@ -44,7 +44,7 @@ class DatabaseService {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -59,6 +59,11 @@ class DatabaseService {
           'ALTER TABLE game_stats ADD COLUMN longestWinStreak INTEGER NOT NULL DEFAULT 0');
       await db.execute(
           'ALTER TABLE game_stats ADD COLUMN perfectGames INTEGER NOT NULL DEFAULT 0');
+    }
+    if (oldVersion < 3) {
+      // Add musicEnabled column for background music support
+      await db.execute(
+          'ALTER TABLE app_settings ADD COLUMN musicEnabled INTEGER NOT NULL DEFAULT 1');
     }
   }
 
@@ -239,6 +244,7 @@ class DatabaseService {
         id INTEGER PRIMARY KEY,
         playerName TEXT NOT NULL,
         soundEnabled INTEGER NOT NULL DEFAULT 1,
+        musicEnabled INTEGER NOT NULL DEFAULT 1,
         vibrationEnabled INTEGER NOT NULL DEFAULT 1,
         themeMode TEXT NOT NULL DEFAULT 'dark',
         aiDifficulty TEXT NOT NULL DEFAULT 'medium',

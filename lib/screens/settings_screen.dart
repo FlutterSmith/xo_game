@@ -31,6 +31,8 @@ class SettingsScreen extends StatelessWidget {
               _buildSectionHeader('Audio & Haptics'),
               _buildSoundToggle(context, settings),
               const SizedBox(height: 8),
+              _buildMusicToggle(context, settings),
+              const SizedBox(height: 8),
               _buildVibrationToggle(context, settings),
               const SizedBox(height: 24),
 
@@ -103,6 +105,20 @@ class SettingsScreen extends StatelessWidget {
         value: settings.soundEnabled,
         onChanged: (_) {
           context.read<SettingsCubit>().toggleSound();
+        },
+      ),
+    );
+  }
+
+  Widget _buildMusicToggle(BuildContext context, AppSettings settings) {
+    return Card(
+      child: SwitchListTile(
+        title: const Text('Background Music'),
+        subtitle: const Text('Play music while gaming'),
+        secondary: const Icon(Icons.music_note),
+        value: settings.musicEnabled,
+        onChanged: (_) {
+          context.read<SettingsCubit>().toggleMusic();
         },
       ),
     );
