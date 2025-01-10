@@ -604,6 +604,14 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
     // Win conditions: 3x3 needs 3 in a row, 4x4 needs 4, 5x5 needs 4
     final winCondition = selectedBoardSize == 3 ? 3 : 4;
     gameBloc.add(UpdateBoardSettings(selectedBoardSize, winCondition));
+
+    // Set game mode if PvP (default is PvC, so only toggle if needed)
+    if (selectedGameMode == GameMode.PvP && gameBloc.state.gameMode != GameMode.PvP) {
+      gameBloc.add(const ToggleGameMode());
+    } else if (selectedGameMode == GameMode.PvC && gameBloc.state.gameMode != GameMode.PvC) {
+      gameBloc.add(const ToggleGameMode());
+    }
+
     gameBloc.add(ChangeDifficulty(selectedDifficulty));
     gameBloc.add(SetPlayerSide(playerSide));
 

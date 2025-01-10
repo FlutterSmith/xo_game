@@ -52,7 +52,7 @@ class MyApp extends StatelessWidget {
       builder: (context, theme) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'XO Game - Professional Tic Tac Toe',
+          title: 'XO Game - Tic Tac Toe',
           theme: theme,
           initialRoute: '/',
           routes: {
