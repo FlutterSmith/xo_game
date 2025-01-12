@@ -107,13 +107,6 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
                         const SizedBox(height: 12),
                         _buildDifficultySelector(isDark),
                         const SizedBox(height: 24),
-
-                        // Player Side
-                        _buildSectionTitle(
-                            'Play As', Icons.person, isDark),
-                        const SizedBox(height: 12),
-                        _buildPlayerSideSelector(isDark),
-                        const SizedBox(height: 24),
                       ],
 
                       // Time Limit
@@ -401,63 +394,6 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildPlayerSideSelector(bool isDark) {
-    return Row(
-      children: ['X', 'O'].map((side) {
-        final isSelected = playerSide == side;
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => setState(() => playerSide = side),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    gradient: isSelected
-                        ? const LinearGradient(
-                            colors: [Color(0xFF06b6d4), Color(0xFF16f2b3)],
-                          )
-                        : null,
-                    color: isSelected
-                        ? null
-                        : isDark
-                            ? Colors.white.withOpacity(0.05)
-                            : Colors.white.withOpacity(0.8),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected
-                          ? Colors.transparent
-                          : isDark
-                              ? Colors.white.withOpacity(0.1)
-                              : Colors.black.withOpacity(0.05),
-                      width: 2,
-                    ),
-                  ),
-                  child: Text(
-                    side,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected
-                          ? Colors.white
-                          : isDark
-                              ? Colors.white
-                              : Colors.grey.shade900,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 

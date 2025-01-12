@@ -371,6 +371,8 @@ class _GameResultScreenState extends State<GameResultScreen>
                                     'New Game',
                                     Icons.settings_rounded,
                                     () {
+                                      // Reset game state before navigating
+                                      context.read<GameBloc>().add(const ResetGame());
                                       Navigator.of(context)
                                           .pushReplacementNamed('/game-setup');
                                     },
@@ -383,6 +385,8 @@ class _GameResultScreenState extends State<GameResultScreen>
                                     'Main Menu',
                                     Icons.home_rounded,
                                     () {
+                                      // Reset game state before navigating
+                                      context.read<GameBloc>().add(const ResetGame());
                                       Navigator.of(context)
                                           .pushReplacementNamed('/menu');
                                     },
