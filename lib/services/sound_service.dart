@@ -31,22 +31,31 @@ class SoundService {
   }
 
   Future<void> playSound(SoundType type) async {
-    if (!_soundEnabled) return;
+    if (!_soundEnabled) {
+      print('[SoundService] Sound disabled, skipping ${type.toString()}');
+      return;
+    }
 
     // Skip sound playback on web platform until sound files are added
     // Web platform has issues loading MP3 files that don't exist
     if (kIsWeb) {
-      // TODO: Add web-compatible sound files or use Web Audio API
+      print('[SoundService] Web platform detected, skipping sound');
       return;
     }
 
     try {
-      // For now, we'll use system beep sounds since we don't have audio files yet
-      // In production, you would load actual sound files from assets
-      await _audioPlayer.play(AssetSource('sounds/${_getSoundFile(type)}'));
+      final soundFile = _getSoundFile(type);
+      print('[SoundService] Playing sound: $soundFile for type: ${type.toString()}');
+
+      // Stop any currently playing sound first
+      await _audioPlayer.stop();
+
+      // Play the new sound
+      await _audioPlayer.play(AssetSource('sounds/$soundFile'));
+      print('[SoundService] Successfully played sound: $soundFile');
     } catch (e) {
-      // Silently fail if sound cannot be played
-      // In production, you would log this error
+      // Log the error so we can debug issues
+      print('[SoundService] ERROR playing sound ${type.toString()}: $e');
     }
   }
 

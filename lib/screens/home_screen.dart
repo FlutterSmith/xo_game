@@ -10,8 +10,15 @@ import '../widgets/board_widget.dart';
 import '../widgets/game_timer_widget.dart';
 
 /// Game Play Screen - Minimal focused gameplay
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _hasNavigated = false;
 
   @override
   Widget build(BuildContext context) {
@@ -20,10 +27,18 @@ class HomeScreen extends StatelessWidget {
     return BlocListener<GameBloc, GameState>(
       listener: (context, state) {
         // Navigate to result screen when game ends
-        if (state.gameOver) {
+        // Only navigate once to prevent duplicate navigation
+        if (state.gameOver && !_hasNavigated && mounted) {
+          _hasNavigated = true;
           Future.delayed(const Duration(milliseconds: 1500), () {
-            Navigator.of(context).pushReplacementNamed('/game-result');
+            if (mounted) {
+              Navigator.of(context).pushReplacementNamed('/game-result');
+            }
           });
+        }
+        // Reset flag when game is reset
+        if (!state.gameOver && _hasNavigated) {
+          _hasNavigated = false;
         }
       },
       child: Scaffold(
