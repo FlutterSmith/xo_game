@@ -16,7 +16,7 @@
 ✅ **Undo/Redo Moves with Persistent Game History**  
 ✅ **Sleek UI with Theme Switching**
 
-![Advanced X‑O Game Demo]([https://media.giphy.com/media/your-demo-url-here/giphy.gif](https://github.com/FlutterSmith))
+![Advanced X‑O Game Demo]((https://giphy.com/gifs/qAWWpdxRzQCFEVGbiJ))
 
 ---
 
@@ -68,9 +68,6 @@
    git clone https://github.com/yourusername/advanced_xo_game.git
    cd advanced_xo_game
 
-
-
-
 ```
 2️⃣ Install Dependencies
 ```
@@ -83,8 +80,11 @@ flutter run
 
 📌 Future Improvements
 ✅ Custom Board Sizes & Win Conditions
+
 ✅ Enhanced Animations & Sound Effects
+
 ✅ Additional Game Modes & Online Leaderboards
+
 ✅ Localization for Multiple Languages
 
 🏆 Contributors
