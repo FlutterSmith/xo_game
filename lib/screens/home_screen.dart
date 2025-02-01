@@ -14,7 +14,7 @@ class HomeScreen extends StatelessWidget {
     final gameBloc = context.read<GameBloc>();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('TicTac by AH'),
+        title: const Text('Advanced Tic Tac Toe'),
         actions: [
           IconButton(
             icon: const Icon(Icons.brightness_6),
@@ -45,51 +45,36 @@ class HomeScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                    state.gameOver
-                        ? state.resultMessage
-                        : 'Turn: ${state.currentPlayer}',
-                    style: const TextStyle(
-                        fontSize: 28,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold)),
+                  state.gameOver
+                      ? state.resultMessage
+                      : 'Turn: ${state.currentPlayer}',
+                  style: const TextStyle(
+                      fontSize: 28,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    DropdownButton<int>(
-                      value: state.boardSize,
-                      dropdownColor: Colors.blue.shade700,
-                      items: [3, 4, 5]
-                          .map((e) => DropdownMenuItem<int>(
-                              value: e,
-                              child: Text('Board: ${e}x$e',
-                                  style: const TextStyle(color: Colors.white))))
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          int winCond = value;
-                          gameBloc.add(UpdateBoardSettings(value, winCond));
-                        }
-                      },
-                    ),
-                    const SizedBox(width: 20),
-                    DropdownButton<AIDifficulty>(
-                      value: state.aiDifficulty,
-                      dropdownColor: Colors.blue.shade700,
-                      items: AIDifficulty.values
-                          .map((e) => DropdownMenuItem<AIDifficulty>(
-                              value: e,
-                              child: Text(
-                                  e.toString().split('.').last.toUpperCase(),
-                                  style: const TextStyle(color: Colors.white))))
-                          .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          gameBloc.add(ChangeDifficulty(value));
-                        }
-                      },
-                    ),
-                  ],
+                // Display static board size info
+                const Text('Board: 3x3',
+                    style: TextStyle(fontSize: 16, color: Colors.white)),
+                const SizedBox(height: 10),
+                // Only AI Difficulty dropdown remains
+                DropdownButton<AIDifficulty>(
+                  value: state.aiDifficulty,
+                  dropdownColor: Colors.blue.shade700,
+                  items: AIDifficulty.values
+                      .map((e) => DropdownMenuItem<AIDifficulty>(
+                            value: e,
+                            child: Text(
+                                e.toString().split('.').last.toUpperCase(),
+                                style: const TextStyle(color: Colors.white)),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      gameBloc.add(ChangeDifficulty(value));
+                    }
+                  },
                 ),
                 const SizedBox(height: 10),
                 const BoardWidget(),
@@ -111,8 +96,8 @@ class HomeScreen extends StatelessWidget {
                     ),
                     ElevatedButton(
                       onPressed: () => gameBloc.add(const ToggleGameMode()),
-                      child: Text(
-                          state.gameMode == GameMode.PvP ? '1vs1' : '1vsPC'),
+                      child:
+                          Text(state.gameMode == GameMode.PvP ? 'PvP' : 'PvC'),
                     ),
                   ],
                 ),
