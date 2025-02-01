@@ -16,7 +16,7 @@
 ✅ **Undo/Redo Moves with Persistent Game History**  
 ✅ **Sleek UI with Theme Switching**
 
-![Advanced X‑O Game Demo]((https://giphy.com/gifs/qAWWpdxRzQCFEVGbiJ))
+![Advanced X‑O Game Demo](https://giphy.com/gifs/qAWWpdxRzQCFEVGbiJ)
 
 ---
 
