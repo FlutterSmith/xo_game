@@ -1,24 +1,34 @@
+import 'package:advanced_xo_game/blocs/game_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'blocs/theme_cubit.dart';
 import 'blocs/game_bloc.dart';
 import 'screens/home_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MultiBlocProvider(
+    providers: [
+      BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
+      BlocProvider<GameBloc>(
+          create: (_) => GameBloc()..add(const LoadHistory())),
+    ],
+    child: const MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => GameBloc(),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Advanced Tic Tac Toe',
-        theme: ThemeData(primarySwatch: Colors.blue),
-        home: const HomeScreen(),
-      ),
+    return BlocBuilder<ThemeCubit, ThemeData>(
+      builder: (context, theme) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Advanced Tic Tac Toe',
+          theme: theme,
+          home: const HomeScreen(),
+        );
+      },
     );
   }
 }

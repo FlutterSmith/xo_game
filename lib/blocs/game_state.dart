@@ -7,13 +7,7 @@ class Snapshot extends Equatable {
   final bool gameOver;
   final String resultMessage;
   final List<int> winningCells;
-  const Snapshot({
-    required this.board,
-    required this.currentPlayer,
-    required this.gameOver,
-    required this.resultMessage,
-    required this.winningCells,
-  });
+  const Snapshot({required this.board, required this.currentPlayer, required this.gameOver, required this.resultMessage, required this.winningCells});
   @override
   List<Object> get props => [board, currentPlayer, gameOver, resultMessage, winningCells];
 }
@@ -29,6 +23,8 @@ class GameState extends Equatable {
   final GameMode gameMode;
   final AIDifficulty aiDifficulty;
   final List<String> gameHistory;
+  final int boardSize;
+  final int winCondition;
   const GameState({
     required this.board,
     required this.currentPlayer,
@@ -40,10 +36,13 @@ class GameState extends Equatable {
     required this.gameMode,
     required this.aiDifficulty,
     required this.gameHistory,
+    required this.boardSize,
+    required this.winCondition,
   });
   factory GameState.initial() {
+    int size = 3;
     return GameState(
-      board: List.filled(9, ''),
+      board: List.filled(size * size, ''),
       currentPlayer: 'X',
       gameOver: false,
       resultMessage: '',
@@ -53,6 +52,8 @@ class GameState extends Equatable {
       gameMode: GameMode.PvP,
       aiDifficulty: AIDifficulty.hard,
       gameHistory: [],
+      boardSize: size,
+      winCondition: size,
     );
   }
   GameState copyWith({
@@ -66,6 +67,8 @@ class GameState extends Equatable {
     GameMode? gameMode,
     AIDifficulty? aiDifficulty,
     List<String>? gameHistory,
+    int? boardSize,
+    int? winCondition,
   }) {
     return GameState(
       board: board ?? this.board,
@@ -78,8 +81,10 @@ class GameState extends Equatable {
       gameMode: gameMode ?? this.gameMode,
       aiDifficulty: aiDifficulty ?? this.aiDifficulty,
       gameHistory: gameHistory ?? this.gameHistory,
+      boardSize: boardSize ?? this.boardSize,
+      winCondition: winCondition ?? this.winCondition,
     );
   }
   @override
-  List<Object> get props => [board, currentPlayer, gameOver, resultMessage, winningCells, undoStack, redoStack, gameMode, aiDifficulty, gameHistory];
+  List<Object> get props => [board, currentPlayer, gameOver, resultMessage, winningCells, undoStack, redoStack, gameMode, aiDifficulty, gameHistory, boardSize, winCondition];
 }

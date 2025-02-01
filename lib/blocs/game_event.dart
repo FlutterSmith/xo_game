@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 enum GameMode { PvP, PvC }
-enum AIDifficulty { easy, medium, hard }
+enum AIDifficulty { easy, medium, hard, adaptive }
 
 abstract class GameEvent extends Equatable {
   const GameEvent();
@@ -41,4 +41,16 @@ class ChangeDifficulty extends GameEvent {
   const ChangeDifficulty(this.difficulty);
   @override
   List<Object> get props => [difficulty];
+}
+
+class LoadHistory extends GameEvent {
+  const LoadHistory();
+}
+
+class UpdateBoardSettings extends GameEvent {
+  final int boardSize;
+  final int winCondition;
+  const UpdateBoardSettings(this.boardSize, this.winCondition);
+  @override
+  List<Object> get props => [boardSize, winCondition];
 }
