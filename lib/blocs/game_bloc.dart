@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:advanced_xo_game/logic/board_logic_5.dart';
 import 'package:advanced_xo_game/utils/logic/board_logic_4.dart';
 import 'package:bloc/bloc.dart';
 import 'game_event.dart';
@@ -18,6 +19,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<UpdateBoardSettings>(_onUpdateBoardSettings);
     on<LoadHistory>(_onLoadHistory);
     on<ClearHistory>(_onClearHistory);
+    on<SetPlayerSide>(_onSetPlayerSide);
   }
 
   FutureOr<void> _onMoveMade(MoveMade event, Emitter<GameState> emit) async {
@@ -38,6 +40,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       result = checkWinner3(newBoard);
     } else if (state.boardSize == 4) {
       result = checkWinner4x4(newBoard);
+    } else if (state.boardSize == 5) {
+      result = checkWinner5x5(newBoard);
     } else {
       result = null;
     }
@@ -263,6 +267,13 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       }
     }
     return bestMove;
+  }
+
+  FutureOr<void> _onSetPlayerSide(
+      SetPlayerSide event, Emitter<GameState> emit) {
+    // Update the current player based on the chosen side.
+    emit(state.copyWith(currentPlayer: event.side));
+    return null;
   }
 
   int _minimax(List<String> board, int depth, bool isMaximizing,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'animated_mark.dart';
 
 class CellWidget extends StatelessWidget {
   final int index;
@@ -25,14 +26,9 @@ class CellWidget extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
+          child: value.isEmpty
+              ? const SizedBox.shrink()
+              : AnimatedMark(mark: value, markSize: 80),
         ),
       ),
     );
