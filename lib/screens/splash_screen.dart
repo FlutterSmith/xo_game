@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'package:advanced_xo_game/screens/pick_side_screen.dart';
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'pick_side_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -34,8 +33,7 @@ class _SplashScreenState extends State<SplashScreen>
     _controller.forward();
     Timer(const Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const PickSideScreen()),
-      );
+          MaterialPageRoute(builder: (_) => const PickSideScreen()));
     });
   }
 
@@ -48,62 +46,67 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: FadeTransition(
-        opacity: _opacityAnimation,
-        child: Stack(
-          children: [
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.deepPurple, Colors.blue],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-            ),
-            AlignTransition(
-              alignment: _alignmentAnimation,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Hero(
-                  tag: 'appLogo',
-                  child: SizedBox(
-                    width: 100,
-                    child: Image.asset('assets/icon/icon.png'),
+      body: AnimatedContainer(
+        duration: const Duration(seconds: 3),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.deepPurple, Colors.blue],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: FadeTransition(
+          opacity: _opacityAnimation,
+          child: Stack(
+            children: [
+              AlignTransition(
+                alignment: _alignmentAnimation,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Hero(
+                    tag: 'appLogo',
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 25.0),
+                      child: Image.asset(
+                        'assets/icon/icon.png', // Replace with your image path
+                        width: 40,
+                        height: 40,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-            Positioned(
-              bottom: 250,
-              left: 0,
-              right: 0,
-              child: FadeTransition(
-                opacity: _opacityAnimation,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Text(
-                      ' X‑O Game',
-                      style: TextStyle(
-                        fontSize: 32,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+              Positioned(
+                bottom: 250,
+                left: 0,
+                right: 0,
+                child: FadeTransition(
+                  opacity: _opacityAnimation,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Text(
+                        'X‑O Game',
+                        style: TextStyle(
+                          fontSize: 32,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'by Ahmed Hamdy',
-                      style: TextStyle(
-                        fontSize: 20,
-                        color: Colors.grey,
+                      SizedBox(height: 10),
+                      Text(
+                        'by Ahmed Hamdy',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.grey,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ),
-          ],
+              )
+            ],
+          ),
         ),
       ),
     );

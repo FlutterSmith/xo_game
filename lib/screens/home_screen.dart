@@ -1,4 +1,5 @@
 import 'package:advanced_xo_game/widgets/board_widget.dart';
+import 'package:advanced_xo_game/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/game_bloc.dart';
@@ -129,23 +130,31 @@ class HomeScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    ElevatedButton(
+                    AdvancedNeumorphicButton(
                       onPressed: state.undoStack.isNotEmpty
                           ? () => gameBloc.add(const UndoMove())
-                          : null,
-                      child: const Text('Undo'),
+                          : () {},
+                      child: const Text(
+                        'Undo',
+                        style: TextStyle(fontSize: 16, color: Colors.black),
+                      ),
                     ),
-                    ElevatedButton(
+                    AdvancedNeumorphicButton(
                       onPressed: state.redoStack.isNotEmpty
                           ? () => gameBloc.add(const RedoMove())
-                          : null,
-                      child: const Text('Redo'),
+                          : () {},
+                      child: const Text(
+                        'Redo',
+                        style: TextStyle(fontSize: 16, color: Colors.black),
+                      ),
                     ),
-                    ElevatedButton(
+                    AdvancedNeumorphicButton(
                       onPressed: () => gameBloc.add(const ToggleGameMode()),
-                      child: Text(state.gameMode == GameMode.PvP
-                          ? 'Player vs Player'
-                          : 'Player vs PC'),
+                      child: Text(
+                        state.gameMode == GameMode.PvP ? 'PvP' : 'PvC',
+                        style:
+                            const TextStyle(fontSize: 16, color: Colors.black),
+                      ),
                     ),
                   ],
                 ),
