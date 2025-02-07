@@ -15,7 +15,8 @@ class HistoryScreen extends StatelessWidget {
             itemCount: state.gameHistory.length,
             itemBuilder: (context, index) {
               return ListTile(
-                title: Text(state.gameHistory[index], style: const TextStyle(fontSize: 20)),
+                title: Text(state.gameHistory[index],
+                    style: const TextStyle(fontSize: 20)),
               );
             },
           );

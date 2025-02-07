@@ -43,14 +43,18 @@ class ChangeDifficulty extends GameEvent {
   List<Object> get props => [difficulty];
 }
 
-class LoadHistory extends GameEvent {
-  const LoadHistory();
-}
-
 class UpdateBoardSettings extends GameEvent {
   final int boardSize;
   final int winCondition;
   const UpdateBoardSettings(this.boardSize, this.winCondition);
   @override
   List<Object> get props => [boardSize, winCondition];
+}
+
+class LoadHistory extends GameEvent {
+  const LoadHistory();
+}
+
+class ClearHistory extends GameEvent {
+  const ClearHistory();
 }

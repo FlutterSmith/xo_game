@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:advanced_xo_game/utils/logic/board_logic_4.dart';
 import 'package:bloc/bloc.dart';
 import 'game_event.dart';
 import 'game_state.dart';
-import '../utils/game_logic.dart';
-import '../database_helper.dart';
+import '../utils/game_logic.dart'; // Contains checkWinner3 for 3x3
 
 class GameBloc extends Bloc<GameEvent, GameState> {
   GameBloc() : super(GameState.initial()) {
@@ -15,9 +15,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<ResetGame>(_onResetGame);
     on<ToggleGameMode>(_onToggleGameMode);
     on<ChangeDifficulty>(_onChangeDifficulty);
-    on<LoadHistory>(_onLoadHistory);
     on<UpdateBoardSettings>(_onUpdateBoardSettings);
+    on<LoadHistory>(_onLoadHistory);
+    on<ClearHistory>(_onClearHistory);
   }
+
   FutureOr<void> _onMoveMade(MoveMade event, Emitter<GameState> emit) async {
     if (state.gameOver || state.board[event.index] != '') return;
     final snapshot = Snapshot(
@@ -30,32 +32,42 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     final newUndoStack = List<Snapshot>.from(state.undoStack)..add(snapshot);
     final newBoard = List<String>.from(state.board);
     newBoard[event.index] = state.currentPlayer;
-    final result =
-        checkWinnerDynamic(newBoard, state.boardSize, state.winCondition);
+
+    Map<String, dynamic>? result;
+    if (state.boardSize == 3) {
+      result = checkWinner3(newBoard);
+    } else if (state.boardSize == 4) {
+      result = checkWinner4x4(newBoard);
+    } else {
+      result = null;
+    }
+
     if (result != null) {
       final newHistory = List<String>.from(state.gameHistory);
       String outcome =
           result['winner'] == 'Draw' ? "Draw" : "Winner: ${result['winner']}";
       newHistory.add(outcome);
-      await DatabaseHelper.instance.insertHistory(outcome);
-      add(const LoadHistory());
       emit(state.copyWith(
-          board: newBoard,
-          gameOver: true,
-          resultMessage: outcome,
-          winningCells: List<int>.from(result['winningCells'] as List),
-          currentPlayer: state.currentPlayer,
-          undoStack: newUndoStack,
-          redoStack: [],
-          gameHistory: newHistory));
+        board: newBoard,
+        gameOver: true,
+        resultMessage: outcome,
+        winningCells: List<int>.from(result['winningCells'] as List),
+        currentPlayer: state.currentPlayer,
+        undoStack: newUndoStack,
+        redoStack: [],
+        gameHistory: newHistory,
+        aiMessage: "",
+      ));
       return;
     } else {
       String nextPlayer = state.currentPlayer == 'X' ? 'O' : 'X';
       emit(state.copyWith(
-          board: newBoard,
-          currentPlayer: nextPlayer,
-          undoStack: newUndoStack,
-          redoStack: []));
+        board: newBoard,
+        currentPlayer: nextPlayer,
+        undoStack: newUndoStack,
+        redoStack: [],
+        aiMessage: "",
+      ));
       if (state.gameMode == GameMode.PvC && nextPlayer == 'O') {
         await Future.delayed(const Duration(milliseconds: 300));
         add(const AITurn());
@@ -65,9 +77,16 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   FutureOr<void> _onAITurn(AITurn event, Emitter<GameState> emit) {
-    if (state.gameOver) return null;
+    if (state.gameOver) {
+      emit(state.copyWith(aiMessage: "Game Over - No AI move"));
+      return null;
+    }
     final move = _getAIMove(state.board, state.aiDifficulty, 'O', 'X');
-    if (move == -1) return null;
+    if (move == -1) {
+      emit(state.copyWith(aiMessage: "No valid move for AI"));
+      return null;
+    }
+    emit(state.copyWith(aiMessage: "AI chooses cell $move"));
     add(MoveMade(move));
     return null;
   }
@@ -78,20 +97,23 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     final newUndoStack = List<Snapshot>.from(state.undoStack)..removeLast();
     final newRedoStack = List<Snapshot>.from(state.redoStack);
     final currentSnapshot = Snapshot(
-        board: List.from(state.board),
-        currentPlayer: state.currentPlayer,
-        gameOver: state.gameOver,
-        resultMessage: state.resultMessage,
-        winningCells: List.from(state.winningCells));
+      board: List.from(state.board),
+      currentPlayer: state.currentPlayer,
+      gameOver: state.gameOver,
+      resultMessage: state.resultMessage,
+      winningCells: List.from(state.winningCells),
+    );
     newRedoStack.add(currentSnapshot);
     emit(state.copyWith(
-        board: lastSnapshot.board,
-        currentPlayer: lastSnapshot.currentPlayer,
-        gameOver: lastSnapshot.gameOver,
-        resultMessage: lastSnapshot.resultMessage,
-        winningCells: lastSnapshot.winningCells,
-        undoStack: newUndoStack,
-        redoStack: newRedoStack));
+      board: lastSnapshot.board,
+      currentPlayer: lastSnapshot.currentPlayer,
+      gameOver: lastSnapshot.gameOver,
+      resultMessage: lastSnapshot.resultMessage,
+      winningCells: lastSnapshot.winningCells,
+      undoStack: newUndoStack,
+      redoStack: newRedoStack,
+      aiMessage: "",
+    ));
     return null;
   }
 
@@ -101,30 +123,39 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     final newRedoStack = List<Snapshot>.from(state.redoStack)..removeLast();
     final newUndoStack = List<Snapshot>.from(state.undoStack);
     final currentSnapshot = Snapshot(
-        board: List.from(state.board),
-        currentPlayer: state.currentPlayer,
-        gameOver: state.gameOver,
-        resultMessage: state.resultMessage,
-        winningCells: List.from(state.winningCells));
+      board: List.from(state.board),
+      currentPlayer: state.currentPlayer,
+      gameOver: state.gameOver,
+      resultMessage: state.resultMessage,
+      winningCells: List.from(state.winningCells),
+    );
     newUndoStack.add(currentSnapshot);
     emit(state.copyWith(
-        board: lastSnapshot.board,
-        currentPlayer: lastSnapshot.currentPlayer,
-        gameOver: lastSnapshot.gameOver,
-        resultMessage: lastSnapshot.resultMessage,
-        winningCells: lastSnapshot.winningCells,
-        undoStack: newUndoStack,
-        redoStack: newRedoStack));
+      board: lastSnapshot.board,
+      currentPlayer: lastSnapshot.currentPlayer,
+      gameOver: lastSnapshot.gameOver,
+      resultMessage: lastSnapshot.resultMessage,
+      winningCells: lastSnapshot.winningCells,
+      undoStack: newUndoStack,
+      redoStack: newRedoStack,
+      aiMessage: "",
+    ));
     return null;
   }
 
   FutureOr<void> _onResetGame(ResetGame event, Emitter<GameState> emit) {
-    emit(GameState.initial().copyWith(
-        gameMode: state.gameMode,
-        aiDifficulty: state.aiDifficulty,
-        gameHistory: state.gameHistory,
-        boardSize: state.boardSize,
-        winCondition: state.winCondition));
+    int size = state.boardSize;
+    List<String> newBoard = List.filled(size * size, '');
+    emit(state.copyWith(
+      board: newBoard,
+      currentPlayer: 'X',
+      gameOver: false,
+      resultMessage: '',
+      winningCells: [],
+      undoStack: [],
+      redoStack: [],
+      aiMessage: "",
+    ));
     return null;
   }
 
@@ -133,40 +164,58 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     GameMode newMode =
         state.gameMode == GameMode.PvP ? GameMode.PvC : GameMode.PvP;
     emit(GameState.initial().copyWith(
-        gameMode: newMode,
-        aiDifficulty: state.aiDifficulty,
-        gameHistory: state.gameHistory,
-        boardSize: state.boardSize,
-        winCondition: state.winCondition));
+      gameMode: newMode,
+      aiDifficulty: state.aiDifficulty,
+      gameHistory: state.gameHistory,
+      boardSize: state.boardSize,
+      winCondition: state.winCondition,
+      aiMessage: "",
+    ));
     return null;
   }
 
   FutureOr<void> _onChangeDifficulty(
       ChangeDifficulty event, Emitter<GameState> emit) {
     emit(GameState.initial().copyWith(
-        gameMode: state.gameMode,
-        aiDifficulty: event.difficulty,
-        gameHistory: state.gameHistory,
-        boardSize: state.boardSize,
-        winCondition: state.winCondition));
+      gameMode: state.gameMode,
+      aiDifficulty: event.difficulty,
+      gameHistory: state.gameHistory,
+      boardSize: state.boardSize,
+      winCondition: state.winCondition,
+      aiMessage: "",
+    ));
+    return null;
+  }
+
+  FutureOr<void> _onUpdateBoardSettings(
+      UpdateBoardSettings event, Emitter<GameState> emit) {
+    int size = event.boardSize;
+    // Reinitialize board with correct number of cells.
+    List<String> newBoard = List.filled(size * size, '');
+    emit(state.copyWith(
+      board: newBoard,
+      gameHistory: state.gameHistory,
+      boardSize: size,
+      winCondition: event.winCondition,
+      currentPlayer: 'X',
+      gameOver: false,
+      resultMessage: '',
+      winningCells: [],
+      undoStack: [],
+      redoStack: [],
+      aiMessage: "",
+    ));
     return null;
   }
 
   FutureOr<void> _onLoadHistory(
       LoadHistory event, Emitter<GameState> emit) async {
-    final history = await DatabaseHelper.instance.getHistory();
-    emit(state.copyWith(gameHistory: history));
+    emit(state.copyWith(aiMessage: "History Loaded"));
     return;
   }
 
-  FutureOr<void> _onUpdateBoardSettings(
-      UpdateBoardSettings event, Emitter<GameState> emit) {
-    emit(GameState.initial().copyWith(
-        gameMode: state.gameMode,
-        aiDifficulty: state.aiDifficulty,
-        gameHistory: state.gameHistory,
-        boardSize: event.boardSize,
-        winCondition: event.winCondition));
+  FutureOr<void> _onClearHistory(ClearHistory event, Emitter<GameState> emit) {
+    emit(state.copyWith(gameHistory: []));
     return null;
   }
 
@@ -218,8 +267,12 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   int _minimax(List<String> board, int depth, bool isMaximizing,
       String aiPlayer, String humanPlayer, int depthLimit) {
-    final result =
-        checkWinnerDynamic(board, state.boardSize, state.winCondition);
+    Map<String, dynamic>? result;
+    if (state.boardSize == 3) {
+      result = checkWinner3(board);
+    } else if (state.boardSize == 4) {
+      result = checkWinner4x4(board);
+    }
     if (result != null || depth >= depthLimit) {
       if (result != null) {
         if (result['winner'] == aiPlayer) return 10 - depth;
