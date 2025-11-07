@@ -1,13 +1,26 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'package:advanced_xo_game/logic/board_logic_5.dart';
-import 'package:advanced_xo_game/utils/logic/board_logic_4.dart';
+import 'package:advanced_xo_game/logic/board_logic_4.dart';
 import 'package:bloc/bloc.dart';
 import 'game_event.dart';
 import 'game_state.dart';
 import '../utils/game_logic.dart'; // Contains checkWinner3 for 3x3
+import '../services/sound_service.dart';
+import '../services/vibration_service.dart';
+import '../services/database_service.dart';
+import '../services/achievement_service.dart';
+import '../models/game_replay.dart';
 
 class GameBloc extends Bloc<GameEvent, GameState> {
+  final SoundService _soundService = SoundService();
+  final VibrationService _vibrationService = VibrationService();
+  final DatabaseService _db = DatabaseService.instance;
+  final AchievementService _achievementService = AchievementService();
+
+  final List<int> _moveHistory = []; // Track moves for replay
+
   GameBloc() : super(GameState.initial()) {
     on<MoveMade>(_onMoveMade);
     on<AITurn>(_onAITurn);
@@ -20,10 +33,19 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<LoadHistory>(_onLoadHistory);
     on<ClearHistory>(_onClearHistory);
     on<SetPlayerSide>(_onSetPlayerSide);
+    _vibrationService.initialize();
   }
 
   FutureOr<void> _onMoveMade(MoveMade event, Emitter<GameState> emit) async {
     if (state.gameOver || state.board[event.index] != '') return;
+
+    // Play sound and vibration feedback
+    _soundService.playMove();
+    _vibrationService.medium();
+
+    // Track move for replay
+    _moveHistory.add(event.index);
+
     final snapshot = Snapshot(
       board: List.from(state.board),
       currentPlayer: state.currentPlayer,
@@ -51,6 +73,22 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       String outcome =
           result['winner'] == 'Draw' ? "Draw" : "Winner: ${result['winner']}";
       newHistory.add(outcome);
+
+      // Play game end sounds and vibration
+      if (result['winner'] == 'Draw') {
+        _soundService.playDraw();
+        _vibrationService.medium();
+      } else {
+        _soundService.playWin();
+        _vibrationService.win();
+      }
+
+      // Save game replay
+      await _saveGameReplay(newBoard, result['winner'] as String, outcome);
+
+      // Add to legacy history
+      await _db.insertHistory(outcome);
+
       emit(state.copyWith(
         board: newBoard,
         gameOver: true,
@@ -97,6 +135,16 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   FutureOr<void> _onUndoMove(UndoMove event, Emitter<GameState> emit) {
     if (state.undoStack.isEmpty) return null;
+
+    // Play undo sound and vibration
+    _soundService.playUndo();
+    _vibrationService.light();
+
+    // Remove last move from history
+    if (_moveHistory.isNotEmpty) {
+      _moveHistory.removeLast();
+    }
+
     final lastSnapshot = state.undoStack.last;
     final newUndoStack = List<Snapshot>.from(state.undoStack)..removeLast();
     final newRedoStack = List<Snapshot>.from(state.redoStack);
@@ -123,6 +171,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   FutureOr<void> _onRedoMove(RedoMove event, Emitter<GameState> emit) {
     if (state.redoStack.isEmpty) return null;
+
+    // Play button sound and vibration
+    _soundService.playButton();
+    _vibrationService.light();
+
     final lastSnapshot = state.redoStack.last;
     final newRedoStack = List<Snapshot>.from(state.redoStack)..removeLast();
     final newUndoStack = List<Snapshot>.from(state.undoStack);
@@ -148,6 +201,13 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   FutureOr<void> _onResetGame(ResetGame event, Emitter<GameState> emit) {
+    // Play button sound and vibration
+    _soundService.playButton();
+    _vibrationService.light();
+
+    // Clear move history for replay
+    _moveHistory.clear();
+
     int size = state.boardSize;
     List<String> newBoard = List.filled(size * size, '');
     emit(state.copyWith(
@@ -349,6 +409,29 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         }
       }
       return bestScore;
+    }
+  }
+
+  /// Save game replay to database
+  Future<void> _saveGameReplay(
+      List<String> board, String winner, String result) async {
+    try {
+      final replay = GameReplay(
+        id: 0, // Auto-incremented by database
+        date: DateTime.now().toIso8601String(),
+        gameMode: state.gameMode == GameMode.PvP ? 'PvP' : 'PvC',
+        difficulty: state.aiDifficulty.toString().split('.').last,
+        boardSize: state.boardSize,
+        moves: jsonEncode(_moveHistory),
+        result: result,
+        winner: winner,
+        movesCount: _moveHistory.length,
+      );
+
+      await _db.saveReplay(replay);
+    } catch (e) {
+      // Silently handle replay save errors
+      // In production, you would log this
     }
   }
 }
