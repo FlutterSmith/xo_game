@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/game_bloc.dart';
 import '../blocs/game_state.dart';
 import '../blocs/game_event.dart';
-import 'cell_widget4.dart';
+import 'cell_widget5.dart';
 
-class BoardWidget4 extends StatelessWidget {
-  BoardWidget4({super.key});
+class BoardWidget5 extends StatelessWidget {
+  const BoardWidget5({super.key});
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<GameBloc, GameState>(
@@ -17,14 +17,14 @@ class BoardWidget4 extends StatelessWidget {
           child: GridView.builder(
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
+              crossAxisCount: 5,
               crossAxisSpacing: 4,
               mainAxisSpacing: 4,
             ),
             itemCount: state.board.length,
             itemBuilder: (context, index) {
               bool highlight = state.winningCells.contains(index);
-              return CellWidget4(
+              return CellWidget5(
                 index: index,
                 value: state.board[index],
                 highlight: highlight,
