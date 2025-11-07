@@ -7,6 +7,8 @@ import '../blocs/game_state.dart';
 import '../blocs/theme_cubit.dart';
 import '../blocs/settings_cubit.dart';
 import '../blocs/statistics_cubit.dart';
+import '../models/app_settings.dart';
+import '../models/game_stats.dart';
 import '../widgets/board_widget3.dart';
 import '../widgets/board_widget5.dart';
 
@@ -255,9 +257,8 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildDrawerHeader(BuildContext context) {
-    return BlocBuilder<SettingsCubit, dynamic>(
+    return BlocBuilder<SettingsCubit, AppSettings>(
       builder: (context, settings) {
-        final playerName = settings?.playerName ?? 'Player';
         return DrawerHeader(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -275,18 +276,17 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                playerName,
+                settings.playerName,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              BlocBuilder<StatisticsCubit, dynamic>(
+              BlocBuilder<StatisticsCubit, GameStats>(
                 builder: (context, stats) {
-                  final winRate = stats?.winRate ?? 0.0;
                   return Text(
-                    'Win Rate: ${winRate.toStringAsFixed(1)}%',
+                    'Win Rate: ${stats.winRate.toStringAsFixed(1)}%',
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
