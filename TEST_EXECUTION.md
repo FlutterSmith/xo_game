@@ -273,6 +273,7 @@
 | BUG-02 | Medium | Sound file 404 errors on web platform | TC-01 | ✅ FIXED |
 | BUG-03 | High | Settings not persisting on web (player name, sound toggle, etc.) | User Report | ✅ FIXED |
 | BUG-04 | Critical | Android build failure - file_picker v1 embedding incompatibility | Android Emulator | ✅ FIXED |
+| BUG-05 | Medium | Unit test failures - null safety and incorrect draw board | Unit Tests | ✅ FIXED |
 
 ---
 
