@@ -24,124 +24,7 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.black.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.2)
-                      : Colors.black.withOpacity(0.1),
-                ),
-              ),
-              child: Icon(
-                Icons.menu,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-            ),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Hero(
-              tag: 'appLogo',
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFec4899), Color(0xFF8b5cf6)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFec4899).withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Image.asset(
-                  'assets/icon/icon.png',
-                  width: 24,
-                  height: 24,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            ShaderMask(
-              shaderCallback: (bounds) => const LinearGradient(
-                colors: [Color(0xFFec4899), Color(0xFF8b5cf6)],
-              ).createShader(bounds),
-              child: const Text(
-                'X‑O Game',
-                style: TextStyle(
-                  fontFamily: 'Raleway',
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.black.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.2)
-                      : Colors.black.withOpacity(0.1),
-                ),
-              ),
-              child: Icon(
-                isDark ? Icons.light_mode : Icons.dark_mode,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-            ),
-            onPressed: () => context.read<ThemeCubit>().toggleTheme(),
-          ),
-          IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : Colors.black.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.2)
-                      : Colors.black.withOpacity(0.1),
-                ),
-              ),
-              child: Icon(
-                Icons.refresh,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-            ),
-            onPressed: () => gameBloc.add(const ResetGame()),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
+      appBar: _buildAppBar(context, isDark, gameBloc),
       drawer: _buildDrawer(context),
       body: Container(
         decoration: BoxDecoration(
@@ -150,40 +33,81 @@ class HomeScreen extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: isDark
                 ? [
-                    const Color(0xFF0f172a),
-                    const Color(0xFF1e293b),
-                    const Color(0xFF0d1224),
+                    const Color(0xFF0a0118),
+                    const Color(0xFF1e1436),
+                    const Color(0xFF0f0820),
                   ]
                 : [
-                    const Color(0xFFf8fafc),
-                    const Color(0xFFe0e7ff),
-                    const Color(0xFFdbeafe),
+                    const Color(0xFFfaf5ff),
+                    const Color(0xFFf3e8ff),
+                    const Color(0xFFede9fe),
                   ],
           ),
         ),
         child: SafeArea(
           child: BlocBuilder<GameBloc, GameState>(
             builder: (context, state) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    // Game Status Card
-                    _buildStatusCard(context, state, isDark),
-                    const SizedBox(height: 20),
+              return Stack(
+                children: [
+                  // Background decoration
+                  Positioned(
+                    top: -100,
+                    right: -100,
+                    child: Container(
+                      width: 300,
+                      height: 300,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            const Color(0xFFec4899).withOpacity(0.15),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -150,
+                    left: -150,
+                    child: Container(
+                      width: 400,
+                      height: 400,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            const Color(0xFF8b5cf6).withOpacity(0.15),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
 
-                    // Game Controls Card
-                    _buildControlsCard(context, state, isDark, gameBloc),
-                    const SizedBox(height: 20),
+                  // Main content
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    child: Column(
+                      children: [
+                        // Professional status display
+                        _buildProfessionalStatus(context, state, isDark),
+                        const SizedBox(height: 24),
 
-                    // Game Board
-                    _buildGameBoard(context, state),
-                    const SizedBox(height: 20),
+                        // Game board with enhanced presentation
+                        _buildEnhancedGameBoard(context, state, isDark),
+                        const SizedBox(height: 24),
 
-                    // Action Buttons
-                    _buildActionButtons(context, state, gameBloc, isDark),
-                  ],
-                ),
+                        // Game controls in elegant layout
+                        _buildElegantControls(context, state, isDark, gameBloc),
+                        const SizedBox(height: 24),
+
+                        // Action buttons with modern design
+                        _buildModernActionButtons(context, state, gameBloc, isDark),
+                      ],
+                    ),
+                  ),
+                ],
               );
             },
           ),
@@ -192,24 +116,351 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusCard(BuildContext context, GameState state, bool isDark) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, bool isDark, GameBloc gameBloc) {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFec4899).withOpacity(0.2),
+                  const Color(0xFF8b5cf6).withOpacity(0.2),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.1),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(
+              Icons.menu_rounded,
+              color: isDark ? Colors.white : const Color(0xFF1e1436),
+              size: 22,
+            ),
+          ),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFec4899), Color(0xFF8b5cf6)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFec4899).withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Image.asset(
+              'assets/icon/icon.png',
+              width: 26,
+              height: 26,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 12),
+          ShaderMask(
+            shaderCallback: (bounds) => const LinearGradient(
+              colors: [Color(0xFFec4899), Color(0xFF8b5cf6)],
+            ).createShader(bounds),
+            child: const Text(
+              'XO Pro',
+              style: TextStyle(
+                fontFamily: 'Raleway',
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFec4899).withOpacity(0.2),
+                  const Color(0xFF8b5cf6).withOpacity(0.2),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.1),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(
+              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              color: isDark ? Colors.white : const Color(0xFF1e1436),
+              size: 22,
+            ),
+          ),
+          onPressed: () => context.read<ThemeCubit>().toggleTheme(),
+        ),
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFec4899).withOpacity(0.2),
+                  const Color(0xFF8b5cf6).withOpacity(0.2),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withOpacity(0.15)
+                    : Colors.black.withOpacity(0.1),
+                width: 1.5,
+              ),
+            ),
+            child: Icon(
+              Icons.refresh_rounded,
+              color: isDark ? Colors.white : const Color(0xFF1e1436),
+              size: 22,
+            ),
+          ),
+          onPressed: () => gameBloc.add(const ResetGame()),
+        ),
+        const SizedBox(width: 12),
+      ],
+    );
+  }
+
+  Widget _buildProfessionalStatus(BuildContext context, GameState state, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
               ? [
-                  const Color(0xFF1e293b).withOpacity(0.8),
-                  const Color(0xFF334155).withOpacity(0.6),
+                  const Color(0xFF1e1436).withOpacity(0.95),
+                  const Color(0xFF2d1b4e).withOpacity(0.85),
+                ]
+              : [
+                  Colors.white.withOpacity(0.95),
+                  const Color(0xFFfaf5ff).withOpacity(0.95),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.12)
+              : const Color(0xFF8b5cf6).withOpacity(0.25),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? const Color(0xFF8b5cf6).withOpacity(0.25)
+                : const Color(0xFF8b5cf6).withOpacity(0.15),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Column(
+            children: [
+              // Main status text
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                transitionBuilder: (child, animation) {
+                  return ScaleTransition(
+                    scale: animation,
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
+                child: ShaderMask(
+                  key: ValueKey(state.gameOver ? state.resultMessage : state.currentPlayer),
+                  shaderCallback: (bounds) => LinearGradient(
+                    colors: state.gameOver
+                        ? (state.resultMessage.contains('Draw')
+                            ? [const Color(0xFF06b6d4), const Color(0xFF0ea5e9)]
+                            : [const Color(0xFFec4899), const Color(0xFF8b5cf6)])
+                        : [const Color(0xFFec4899), const Color(0xFF8b5cf6)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds),
+                  child: Text(
+                    state.gameOver
+                        ? state.resultMessage
+                        : 'Player ${state.currentPlayer}',
+                    style: const TextStyle(
+                      fontSize: 36,
+                      fontFamily: 'Raleway',
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 1.2,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+
+              if (!state.gameOver) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFec4899).withOpacity(0.15),
+                        const Color(0xFF8b5cf6).withOpacity(0.15),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF8b5cf6).withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF10b981),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF10b981).withOpacity(0.6),
+                              blurRadius: 8,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Your Turn',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? Colors.white.withOpacity(0.9)
+                              : const Color(0xFF1e1436),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnhancedGameBoard(BuildContext context, GameState state, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  const Color(0xFF1e1436).withOpacity(0.8),
+                  const Color(0xFF2d1b4e).withOpacity(0.6),
                 ]
               : [
                   Colors.white.withOpacity(0.9),
-                  Colors.white.withOpacity(0.7),
+                  const Color(0xFFfaf5ff).withOpacity(0.8),
                 ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withOpacity(0.1)
+              : const Color(0xFF8b5cf6).withOpacity(0.2),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? const Color(0xFF8b5cf6).withOpacity(0.3)
+                : const Color(0xFF8b5cf6).withOpacity(0.15),
+            blurRadius: 30,
+            offset: const Offset(0, 12),
+            spreadRadius: -5,
+          ),
+          BoxShadow(
+            color: isDark
+                ? const Color(0xFFec4899).withOpacity(0.2)
+                : const Color(0xFFec4899).withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            spreadRadius: -8,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(26),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: state.boardSize == 3
+              ? const BoardWidget3()
+              : state.boardSize == 4
+                  ? const BoardWidget4()
+                  : const BoardWidget5(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildElegantControls(BuildContext context, GameState state, bool isDark, GameBloc gameBloc) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [
+                  const Color(0xFF1e1436).withOpacity(0.8),
+                  const Color(0xFF2d1b4e).withOpacity(0.6),
+                ]
+              : [
+                  Colors.white.withOpacity(0.9),
+                  const Color(0xFFfaf5ff).withOpacity(0.8),
+                ],
+        ),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isDark
               ? Colors.white.withOpacity(0.1)
@@ -227,285 +478,178 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(22),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Column(
             children: [
-              ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [Color(0xFFec4899), Color(0xFF8b5cf6)],
-                ).createShader(bounds),
-                child: Text(
-                  state.gameOver ? state.resultMessage : 'Turn: ${state.currentPlayer}',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontFamily: 'Raleway',
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              if (!state.gameOver) ...[
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFec4899), Color(0xFF8b5cf6)],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        state.gameMode == GameMode.PvP ? 'Player vs Player' : 'Player vs AI',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildControlsCard(BuildContext context, GameState state, bool isDark, GameBloc gameBloc) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  const Color(0xFF1e293b).withOpacity(0.6),
-                  const Color(0xFF334155).withOpacity(0.4),
-                ]
-              : [
-                  Colors.white.withOpacity(0.8),
-                  Colors.white.withOpacity(0.6),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.1)
-              : const Color(0xFF8b5cf6).withOpacity(0.2),
-          width: 2,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.grid_4x4,
-                color: isDark ? const Color(0xFFec4899) : const Color(0xFF8b5cf6),
-              ),
-              const SizedBox(width: 8),
-              Text(
+              // Board Size Selector
+              _buildControlRow(
+                context,
                 'Board Size',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF334155)
-                  : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : const Color(0xFF8b5cf6).withOpacity(0.2),
-              ),
-            ),
-            child: DropdownButton<int>(
-              value: state.boardSize,
-              isExpanded: true,
-              underline: const SizedBox(),
-              dropdownColor: isDark ? const Color(0xFF334155) : Colors.white,
-              icon: Icon(
-                Icons.arrow_drop_down,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-              items: [3, 4, 5]
-                  .map(
-                    (e) => DropdownMenuItem<int>(
-                      value: e,
-                      child: Text(
-                        '${e}x$e Grid',
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black87,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  gameBloc.add(UpdateBoardSettings(value, value));
-                }
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Icon(
-                Icons.psychology,
-                color: isDark ? const Color(0xFFec4899) : const Color(0xFF8b5cf6),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'AI Difficulty',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF334155)
-                  : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withOpacity(0.1)
-                    : const Color(0xFF8b5cf6).withOpacity(0.2),
-              ),
-            ),
-            child: DropdownButton<AIDifficulty>(
-              value: state.aiDifficulty,
-              isExpanded: true,
-              underline: const SizedBox(),
-              dropdownColor: isDark ? const Color(0xFF334155) : Colors.white,
-              icon: Icon(
-                Icons.arrow_drop_down,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-              items: AIDifficulty.values
-                  .map(
-                    (e) => DropdownMenuItem<AIDifficulty>(
-                      value: e,
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: _getDifficultyColors(e),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            e.toString().split('.').last.toUpperCase(),
-                            style: TextStyle(
-                              color: isDark ? Colors.white : Colors.black87,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                DropdownButtonHideUnderline(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFec4899).withOpacity(0.15),
+                          const Color(0xFF8b5cf6).withOpacity(0.15),
                         ],
                       ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF8b5cf6).withOpacity(0.3),
+                      ),
                     ),
-                  )
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  gameBloc.add(ChangeDifficulty(value));
-                }
-              },
-            ),
+                    child: DropdownButton<int>(
+                      value: state.boardSize,
+                      dropdownColor: isDark ? const Color(0xFF1e1436) : Colors.white,
+                      icon: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: isDark ? Colors.white : const Color(0xFF1e1436),
+                      ),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF1e1436),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Raleway',
+                      ),
+                      items: [3, 4, 5].map((size) {
+                        return DropdownMenuItem(
+                          value: size,
+                          child: Text('$size×$size'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          gameBloc.add(UpdateBoardSettings(value, value));
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                isDark,
+              ),
+              const SizedBox(height: 16),
+
+              // AI Difficulty Selector
+              _buildControlRow(
+                context,
+                'AI Difficulty',
+                DropdownButtonHideUnderline(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFec4899).withOpacity(0.15),
+                          const Color(0xFF8b5cf6).withOpacity(0.15),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFF8b5cf6).withOpacity(0.3),
+                      ),
+                    ),
+                    child: DropdownButton<AIDifficulty>(
+                      value: state.aiDifficulty,
+                      dropdownColor: isDark ? const Color(0xFF1e1436) : Colors.white,
+                      icon: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: isDark ? Colors.white : const Color(0xFF1e1436),
+                      ),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF1e1436),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Raleway',
+                      ),
+                      items: AIDifficulty.values.where((d) => d != AIDifficulty.adaptive).map((diff) {
+                        final label = diff.name.toUpperCase();
+                        return DropdownMenuItem(
+                          value: diff,
+                          child: Row(
+                            children: [
+                              Icon(
+                                diff == AIDifficulty.easy
+                                    ? Icons.sentiment_satisfied_rounded
+                                    : diff == AIDifficulty.medium
+                                        ? Icons.sentiment_neutral_rounded
+                                        : Icons.sentiment_very_dissatisfied_rounded,
+                                size: 18,
+                                color: diff == AIDifficulty.easy
+                                    ? const Color(0xFF10b981)
+                                    : diff == AIDifficulty.medium
+                                        ? const Color(0xFFf59e0b)
+                                        : const Color(0xFFef4444),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(label),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          gameBloc.add(ChangeDifficulty(value));
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                isDark,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  List<Color> _getDifficultyColors(AIDifficulty difficulty) {
-    switch (difficulty) {
-      case AIDifficulty.easy:
-        return [const Color(0xFF16f2b3), const Color(0xFF06b6d4)];
-      case AIDifficulty.medium:
-        return [const Color(0xFFfbbf24), const Color(0xFFf59e0b)];
-      case AIDifficulty.hard:
-        return [const Color(0xFFef4444), const Color(0xFFdc2626)];
-      case AIDifficulty.adaptive:
-        return [const Color(0xFFec4899), const Color(0xFF8b5cf6)];
-    }
-  }
-
-  Widget _buildGameBoard(BuildContext context, GameState state) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: Theme.of(context).brightness == Brightness.dark
-              ? [
-                  const Color(0xFF1e293b).withOpacity(0.6),
-                  const Color(0xFF334155).withOpacity(0.4),
-                ]
-              : [
-                  Colors.white.withOpacity(0.8),
-                  Colors.white.withOpacity(0.6),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white.withOpacity(0.1)
-              : const Color(0xFF8b5cf6).withOpacity(0.2),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF8b5cf6).withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: state.boardSize == 3
-          ? const BoardWidget3()
-          : state.boardSize == 4
-              ? const BoardWidget4()
-              : const BoardWidget5(),
-    );
-  }
-
-  Widget _buildActionButtons(BuildContext context, GameState state, GameBloc gameBloc, bool isDark) {
+  Widget _buildControlRow(BuildContext context, String label, Widget control, bool isDark) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFec4899), Color(0xFF8b5cf6)],
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                label.contains('Board')
+                    ? Icons.grid_4x4_rounded
+                    : Icons.psychology_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isDark
+                    ? Colors.white.withOpacity(0.9)
+                    : const Color(0xFF1e1436),
+                fontFamily: 'Raleway',
+              ),
+            ),
+          ],
+        ),
+        control,
+      ],
+    );
+  }
+
+  Widget _buildModernActionButtons(BuildContext context, GameState state, GameBloc gameBloc, bool isDark) {
+    return Row(
       children: [
         Expanded(
           child: AdvancedNeumorphicButton(
@@ -515,15 +659,23 @@ class HomeScreen extends StatelessWidget {
             isEnabled: state.undoStack.isNotEmpty,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.undo, size: 20, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Undo'),
+              children: [
+                Icon(
+                  Icons.undo_rounded,
+                  color: state.undoStack.isNotEmpty ? Colors.white : Colors.white.withOpacity(0.4),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Undo',
+                  style: TextStyle(
+                    color: state.undoStack.isNotEmpty ? Colors.white : Colors.white.withOpacity(0.4),
+                  ),
+                ),
               ],
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         Expanded(
           child: AdvancedNeumorphicButton(
             onPressed: state.redoStack.isNotEmpty
@@ -532,28 +684,18 @@ class HomeScreen extends StatelessWidget {
             isEnabled: state.redoStack.isNotEmpty,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.redo, size: 20, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Redo'),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: AdvancedNeumorphicButton(
-            onPressed: () => gameBloc.add(const ToggleGameMode()),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  state.gameMode == GameMode.PvP ? Icons.people : Icons.smart_toy,
-                  size: 20,
-                  color: Colors.white,
+                  Icons.redo_rounded,
+                  color: state.redoStack.isNotEmpty ? Colors.white : Colors.white.withOpacity(0.4),
                 ),
                 const SizedBox(width: 8),
-                Text(state.gameMode == GameMode.PvP ? 'PvP' : 'PvC'),
+                Text(
+                  'Redo',
+                  style: TextStyle(
+                    color: state.redoStack.isNotEmpty ? Colors.white : Colors.white.withOpacity(0.4),
+                  ),
+                ),
               ],
             ),
           ),
@@ -566,208 +708,199 @@ class HomeScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Drawer(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: isDark
-                ? [
-                    const Color(0xFF0f172a),
-                    const Color(0xFF1e293b),
-                  ]
-                : [
-                    Colors.white,
-                    const Color(0xFFf8fafc),
-                  ],
-          ),
-        ),
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            _buildDrawerHeader(context),
-            _buildDrawerItem(
-              context,
-              icon: Icons.home,
-              title: 'Home',
-              onTap: () => Navigator.pop(context),
-            ),
-            _buildDrawerItem(
-              context,
-              icon: Icons.bar_chart,
-              title: 'Statistics',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/statistics');
-              },
-            ),
-            _buildDrawerItem(
-              context,
-              icon: Icons.emoji_events,
-              title: 'Achievements',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/achievements');
-              },
-            ),
-            _buildDrawerItem(
-              context,
-              icon: Icons.movie,
-              title: 'Game Replays',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/replays');
-              },
-            ),
-            _buildDrawerItem(
-              context,
-              icon: Icons.history,
-              title: 'Game History',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/history');
-              },
-            ),
-            const Divider(),
-            _buildDrawerItem(
-              context,
-              icon: Icons.school,
-              title: 'How to Play',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/tutorial');
-              },
-            ),
-            _buildDrawerItem(
-              context,
-              icon: Icons.settings,
-              title: 'Settings',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/settings');
-              },
-            ),
-            _buildDrawerItem(
-              context,
-              icon: Icons.info,
-              title: 'About',
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, '/about');
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrawerHeader(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return BlocBuilder<SettingsCubit, AppSettings>(
-      builder: (context, settings) {
-        return Container(
-          height: 200,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFFec4899), Color(0xFF8b5cf6)],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF8b5cf6).withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+      backgroundColor: isDark ? const Color(0xFF1e1436) : Colors.white,
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFec4899),
+                  Color(0xFF8b5cf6),
+                ],
               ),
-            ],
-          ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
-                    width: 2,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF8b5cf6).withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.person_rounded,
+                    color: Colors.white,
+                    size: 40,
                   ),
                 ),
-                child: const Icon(
-                  Icons.person,
-                  size: 40,
-                  color: Colors.white,
+                const SizedBox(height: 16),
+                const Text(
+                  'Player',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Raleway',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                settings.playerName,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Raleway',
-                ),
-              ),
-              const SizedBox(height: 4),
-              BlocBuilder<StatisticsCubit, GameStats>(
-                builder: (context, stats) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Win Rate: ${stats.winRate.toStringAsFixed(1)}%',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                const SizedBox(height: 4),
+                BlocBuilder<StatisticsCubit, GameStats>(
+                  builder: (context, stats) {
+                    final winRate = stats.totalGames > 0
+                        ? ((stats.wins / stats.totalGames) * 100).toStringAsFixed(1)
+                        : '0.0';
+                    return Text(
+                      'Win Rate: $winRate%',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
                       ),
-                    ),
-                  );
-                },
-              ),
-            ],
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
-        );
-      },
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              children: [
+                _buildDrawerItem(
+                  context,
+                  Icons.home_rounded,
+                  'Home',
+                  () => Navigator.pop(context),
+                  isDark,
+                ),
+                _buildDrawerItem(
+                  context,
+                  Icons.bar_chart_rounded,
+                  'Statistics',
+                  () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/statistics');
+                  },
+                  isDark,
+                ),
+                _buildDrawerItem(
+                  context,
+                  Icons.emoji_events_rounded,
+                  'Achievements',
+                  () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/achievements');
+                  },
+                  isDark,
+                ),
+                _buildDrawerItem(
+                  context,
+                  Icons.movie_rounded,
+                  'Game Replays',
+                  () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/replays');
+                  },
+                  isDark,
+                ),
+                _buildDrawerItem(
+                  context,
+                  Icons.history_rounded,
+                  'Game History',
+                  () {
+                    Navigator.pop(context);
+                    // Navigate to history if route exists
+                  },
+                  isDark,
+                ),
+                const Divider(height: 32),
+                _buildDrawerItem(
+                  context,
+                  Icons.school_rounded,
+                  'How to Play',
+                  () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/tutorial');
+                  },
+                  isDark,
+                ),
+                _buildDrawerItem(
+                  context,
+                  Icons.settings_rounded,
+                  'Settings',
+                  () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/settings');
+                  },
+                  isDark,
+                ),
+                _buildDrawerItem(
+                  context,
+                  Icons.info_rounded,
+                  'About',
+                  () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/about');
+                  },
+                  isDark,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildDrawerItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
+    BuildContext context,
+    IconData icon,
+    String title,
+    VoidCallback onTap,
+    bool isDark,
+  ) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFec4899), Color(0xFF8b5cf6)],
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFFec4899).withOpacity(0.15),
+              const Color(0xFF8b5cf6).withOpacity(0.15),
+            ],
           ),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: Colors.white, size: 20),
+        child: Icon(
+          icon,
+          color: isDark ? Colors.white : const Color(0xFF1e1436),
+          size: 22,
+        ),
       ),
       title: Text(
         title,
         style: TextStyle(
-          fontWeight: FontWeight.w500,
-          color: isDark ? Colors.white : Colors.black87,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: isDark ? Colors.white : const Color(0xFF1e1436),
+          fontFamily: 'Raleway',
         ),
       ),
       onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
     );
   }
 }
