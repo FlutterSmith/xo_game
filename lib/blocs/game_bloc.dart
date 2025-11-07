@@ -167,12 +167,17 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       ToggleGameMode event, Emitter<GameState> emit) {
     GameMode newMode =
         state.gameMode == GameMode.PvP ? GameMode.PvC : GameMode.PvP;
-    emit(GameState.initial().copyWith(
+    int size = state.boardSize;
+    List<String> newBoard = List.filled(size * size, '');
+    emit(state.copyWith(
+      board: newBoard,
+      currentPlayer: 'X', // Reset starting player.
+      gameOver: false,
+      resultMessage: '',
+      winningCells: [],
+      undoStack: [],
+      redoStack: [],
       gameMode: newMode,
-      aiDifficulty: state.aiDifficulty,
-      gameHistory: state.gameHistory,
-      boardSize: state.boardSize,
-      winCondition: state.winCondition,
       aiMessage: "",
     ));
     return null;
@@ -183,10 +188,6 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     emit(GameState.initial().copyWith(
       gameMode: state.gameMode,
       aiDifficulty: event.difficulty,
-      gameHistory: state.gameHistory,
-      boardSize: state.boardSize,
-      winCondition: state.winCondition,
-      aiMessage: "",
     ));
     return null;
   }
@@ -225,19 +226,48 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   int _getAIMove(List<String> board, AIDifficulty difficulty, String aiPlayer,
       String humanPlayer) {
-    switch (difficulty) {
-      case AIDifficulty.easy:
-        return _randomMove(board);
-      case AIDifficulty.medium:
+    if (state.boardSize == 5) {
+      // For a 5x5 board, limit the search depth to 3 on hard difficulty.
+      if (difficulty == AIDifficulty.hard) {
+        return _minimaxMove(board, aiPlayer, humanPlayer, 3);
+      } else if (difficulty == AIDifficulty.medium) {
         return _minimaxMove(board, aiPlayer, humanPlayer, 2);
-      case AIDifficulty.hard:
-        return _minimaxMove(board, aiPlayer, humanPlayer, board.length);
-      case AIDifficulty.adaptive:
+      } else if (difficulty == AIDifficulty.adaptive) {
         int available = board.where((e) => e == '').length;
         int depthLimit = available < 5 ? available : 3;
         return _minimaxMove(board, aiPlayer, humanPlayer, depthLimit);
-      default:
+      } else {
         return _randomMove(board);
+      }
+    } else if (state.boardSize == 4) {
+      // For a 4x4 board, limit the search depth to 4 on hard difficulty.
+      if (difficulty == AIDifficulty.hard) {
+        return _minimaxMove(board, aiPlayer, humanPlayer, 4);
+      } else if (difficulty == AIDifficulty.medium) {
+        return _minimaxMove(board, aiPlayer, humanPlayer, 2);
+      } else if (difficulty == AIDifficulty.adaptive) {
+        int available = board.where((e) => e == '').length;
+        int depthLimit = available < 5 ? available : 4;
+        return _minimaxMove(board, aiPlayer, humanPlayer, depthLimit);
+      } else {
+        return _randomMove(board);
+      }
+    } else {
+      // For a 3x3 board, use full depth on hard.
+      switch (difficulty) {
+        case AIDifficulty.easy:
+          return _randomMove(board);
+        case AIDifficulty.medium:
+          return _minimaxMove(board, aiPlayer, humanPlayer, 2);
+        case AIDifficulty.hard:
+          return _minimaxMove(board, aiPlayer, humanPlayer, board.length);
+        case AIDifficulty.adaptive:
+          int available = board.where((e) => e == '').length;
+          int depthLimit = available < 5 ? available : 3;
+          return _minimaxMove(board, aiPlayer, humanPlayer, depthLimit);
+        default:
+          return _randomMove(board);
+      }
     }
   }
 
@@ -283,7 +313,10 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       result = checkWinner3(board);
     } else if (state.boardSize == 4) {
       result = checkWinner4x4(board);
+    } else if (state.boardSize == 5) {
+      result = checkWinner5x5(board);
     }
+
     if (result != null || depth >= depthLimit) {
       if (result != null) {
         if (result['winner'] == aiPlayer) return 10 - depth;

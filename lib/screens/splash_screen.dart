@@ -65,13 +65,10 @@ class _SplashScreenState extends State<SplashScreen>
                   padding: const EdgeInsets.all(16.0),
                   child: Hero(
                     tag: 'appLogo',
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 25.0),
-                      child: Image.asset(
-                        'assets/icon/icon.png', // Replace with your image path
-                        width: 40,
-                        height: 40,
-                      ),
+                    child: Image.asset(
+                      'assets/icon/icon.png', // Replace with your image path
+                      width: 80,
+                      height: 80,
                     ),
                   ),
                 ),
@@ -91,6 +88,7 @@ class _SplashScreenState extends State<SplashScreen>
                           fontSize: 32,
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
+                          fontFamily: 'assets/fonts/Poppins-Bold.ttf',
                         ),
                       ),
                       SizedBox(height: 10),
@@ -99,6 +97,7 @@ class _SplashScreenState extends State<SplashScreen>
                         style: TextStyle(
                           fontSize: 20,
                           color: Colors.grey,
+                          fontFamily: 'assets/fonts/Poppins-Bold.ttf',
                         ),
                       ),
                     ],

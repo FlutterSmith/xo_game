@@ -74,7 +74,9 @@ class _PickSideScreenState extends State<PickSideScreen>
       appBar: AppBar(
         centerTitle: true,
         backgroundColor: Colors.deepPurple,
-        title: const Text('Pick Your Side'),
+        title: const Text(
+          'Pick Your Side',
+        ),
         leading: Padding(
           padding: const EdgeInsets.only(left: 25.0),
           child: Image.asset(
@@ -99,9 +101,11 @@ class _PickSideScreenState extends State<PickSideScreen>
               const Text(
                 'Choose your side',
                 style: TextStyle(
-                    fontSize: 36,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold),
+                  fontSize: 36,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'assets/fonts/Poppins-Bold.ttf',
+                ),
               ),
               const SizedBox(height: 20),
               Row(
