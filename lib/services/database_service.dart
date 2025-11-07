@@ -584,10 +584,13 @@ class DatabaseService {
   // ===== GAME REPLAYS METHODS =====
 
   Future<int> saveReplay(GameReplay replay) async {
+    debugPrint('[DB] saveReplay - Starting');
     if (kIsWeb) {
+      debugPrint('[DB] saveReplay - Web platform, using SharedPreferences');
       final prefs = await this.prefs;
       final replaysJson = prefs.getString('game_replays') ?? '[]';
       final List<dynamic> replays = jsonDecode(replaysJson);
+      debugPrint('[DB] saveReplay - Current replays count: ${replays.length}');
 
       // Generate ID
       final int newId = replays.isEmpty ? 1 : (replays.map((r) => r['id'] as int).reduce((a, b) => a > b ? a : b) + 1);
@@ -595,11 +598,15 @@ class DatabaseService {
 
       replays.insert(0, replayWithId); // Insert at beginning for DESC order
       await prefs.setString('game_replays', jsonEncode(replays));
+      debugPrint('[DB] saveReplay - Saved with ID: $newId, total replays: ${replays.length}');
       return newId;
     }
 
+    debugPrint('[DB] saveReplay - Mobile platform, using SQLite');
     final db = await database;
-    return await db.insert('game_replays', replay.toMap());
+    final id = await db.insert('game_replays', replay.toMap());
+    debugPrint('[DB] saveReplay - Saved with ID: $id');
+    return id;
   }
 
   Future<List<GameReplay>> getReplays({int limit = 50}) async {
