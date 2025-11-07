@@ -37,15 +37,23 @@ class AppSettings {
   }
 
   factory AppSettings.fromMap(Map<String, dynamic> map) {
+    // Helper function to handle both int and bool types
+    bool _toBool(dynamic value) {
+      if (value is bool) return value;
+      if (value is int) return value == 1;
+      if (value is String) return value == '1' || value.toLowerCase() == 'true';
+      return false;
+    }
+
     return AppSettings(
       id: map['id'] as int,
       playerName: map['playerName'] as String,
-      soundEnabled: (map['soundEnabled'] as int) == 1,
-      vibrationEnabled: (map['vibrationEnabled'] as int) == 1,
+      soundEnabled: _toBool(map['soundEnabled']),
+      vibrationEnabled: _toBool(map['vibrationEnabled']),
       themeMode: map['themeMode'] as String,
       aiDifficulty: map['aiDifficulty'] as String,
       defaultBoardSize: map['defaultBoardSize'] as int,
-      showTutorial: (map['showTutorial'] as int) == 1,
+      showTutorial: _toBool(map['showTutorial']),
       language: map['language'] as String,
     );
   }

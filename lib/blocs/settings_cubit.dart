@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import '../models/app_settings.dart';
 import '../services/database_service.dart';
 import '../services/sound_service.dart';
@@ -16,10 +17,20 @@ class SettingsCubit extends Cubit<AppSettings> {
 
   /// Load settings from database
   Future<void> loadSettings() async {
-    final settings = await _db.getSettings();
-    _soundService.setSoundEnabled(settings.soundEnabled);
-    _vibrationService.setVibrationEnabled(settings.vibrationEnabled);
-    emit(settings);
+    try {
+      debugPrint('[SettingsCubit] loadSettings - Starting');
+      final settings = await _db.getSettings();
+      debugPrint('[SettingsCubit] loadSettings - Got settings: ${settings.playerName}');
+      _soundService.setSoundEnabled(settings.soundEnabled);
+      _vibrationService.setVibrationEnabled(settings.vibrationEnabled);
+      emit(settings);
+      debugPrint('[SettingsCubit] loadSettings - Settings emitted successfully');
+    } catch (e, stack) {
+      debugPrint('[SettingsCubit] ERROR in loadSettings: $e');
+      debugPrint('[SettingsCubit] Stack: $stack');
+      // Emit default settings on error
+      emit(AppSettings.defaultSettings());
+    }
   }
 
   /// Update player name
