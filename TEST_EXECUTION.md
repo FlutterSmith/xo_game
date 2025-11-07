@@ -269,7 +269,10 @@
 
 | Bug ID | Severity | Description | Test Case | Status |
 |--------|----------|-------------|-----------|--------|
-| - | - | - | - | - |
+| BUG-01 | Critical | Database service failed on web - `sqflite` not supported | TC-01 | ✅ FIXED |
+| BUG-02 | Medium | Sound file 404 errors on web platform | TC-01 | ✅ FIXED |
+| BUG-03 | High | Settings not persisting on web (player name, sound toggle, etc.) | User Report | ✅ FIXED |
+| BUG-04 | Critical | Android build failure - file_picker v1 embedding incompatibility | Android Emulator | ✅ FIXED |
 
 ---
 
