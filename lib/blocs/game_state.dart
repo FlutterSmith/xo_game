@@ -32,6 +32,10 @@ class GameState extends Equatable {
   final int boardSize;
   final int winCondition;
   final String aiMessage;
+  final bool timedMode;
+  final int timeLimit; // seconds per move
+  final int timeRemaining; // current countdown
+  final bool isTimerActive;
 
   const GameState({
     required this.board,
@@ -47,6 +51,10 @@ class GameState extends Equatable {
     required this.boardSize,
     required this.winCondition,
     required this.aiMessage,
+    required this.timedMode,
+    required this.timeLimit,
+    required this.timeRemaining,
+    required this.isTimerActive,
   });
 
   factory GameState.initial() {
@@ -65,6 +73,10 @@ class GameState extends Equatable {
       boardSize: size,
       winCondition: size,
       aiMessage: '',
+      timedMode: false,
+      timeLimit: 30, // Default 30 seconds
+      timeRemaining: 30,
+      isTimerActive: false,
     );
   }
 
@@ -82,6 +94,10 @@ class GameState extends Equatable {
     int? boardSize,
     int? winCondition,
     String? aiMessage,
+    bool? timedMode,
+    int? timeLimit,
+    int? timeRemaining,
+    bool? isTimerActive,
   }) {
     return GameState(
       board: board ?? this.board,
@@ -97,6 +113,10 @@ class GameState extends Equatable {
       boardSize: boardSize ?? this.boardSize,
       winCondition: winCondition ?? this.winCondition,
       aiMessage: aiMessage ?? this.aiMessage,
+      timedMode: timedMode ?? this.timedMode,
+      timeLimit: timeLimit ?? this.timeLimit,
+      timeRemaining: timeRemaining ?? this.timeRemaining,
+      isTimerActive: isTimerActive ?? this.isTimerActive,
     );
   }
 
@@ -115,5 +135,9 @@ class GameState extends Equatable {
         boardSize,
         winCondition,
         aiMessage,
+        timedMode,
+        timeLimit,
+        timeRemaining,
+        isTimerActive,
       ];
 }

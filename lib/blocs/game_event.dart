@@ -64,3 +64,22 @@ class SetPlayerSide extends GameEvent {
   @override
   List<Object> get props => [side];
 }
+
+class ToggleTimedMode extends GameEvent {
+  const ToggleTimedMode();
+}
+
+class SetTimeLimit extends GameEvent {
+  final int seconds;
+  const SetTimeLimit(this.seconds);
+  @override
+  List<Object> get props => [seconds];
+}
+
+class TimerTick extends GameEvent {
+  const TimerTick();
+}
+
+class TimeoutMove extends GameEvent {
+  const TimeoutMove();
+}

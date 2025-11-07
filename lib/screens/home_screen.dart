@@ -15,6 +15,7 @@ import '../widgets/board_widget3.dart';
 import '../widgets/board_widget5.dart';
 import '../widgets/board_widget.dart';
 import '../widgets/confetti_widget.dart';
+import '../widgets/game_timer_widget.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -395,6 +396,10 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ],
+
+              // Timer widget for timed mode
+              const SizedBox(height: 16),
+              const GameTimerWidget(),
             ],
           ),
         ),
@@ -678,6 +683,73 @@ class HomeScreen extends StatelessWidget {
                 ),
                 isDark,
               ),
+              const SizedBox(height: 16),
+
+              // Timed Mode Toggle
+              _buildControlRow(
+                context,
+                'Timed Mode',
+                Switch(
+                  value: state.timedMode,
+                  onChanged: (value) {
+                    gameBloc.add(const ToggleTimedMode());
+                  },
+                  activeColor: const Color(0xFF16f2b3),
+                ),
+                isDark,
+              ),
+
+              // Time Limit Selector (shown only if timed mode is on)
+              if (state.timedMode) ...[
+                const SizedBox(height: 16),
+                _buildControlRow(
+                  context,
+                  'Time Limit',
+                  DropdownButtonHideUnderline(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFFec4899).withOpacity(0.15),
+                            const Color(0xFF8b5cf6).withOpacity(0.15),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: const Color(0xFF8b5cf6).withOpacity(0.3),
+                        ),
+                      ),
+                      child: DropdownButton<int>(
+                        value: state.timeLimit,
+                        dropdownColor: isDark ? const Color(0xFF1e1436) : Colors.white,
+                        icon: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: isDark ? Colors.white : const Color(0xFF1e1436),
+                        ),
+                        style: TextStyle(
+                          color: isDark ? Colors.white : const Color(0xFF1e1436),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Raleway',
+                        ),
+                        items: [10, 20, 30, 60].map((seconds) {
+                          return DropdownMenuItem(
+                            value: seconds,
+                            child: Text('$seconds seconds'),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            gameBloc.add(SetTimeLimit(value));
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  isDark,
+                ),
+              ],
             ],
           ),
         ),
