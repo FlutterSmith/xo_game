@@ -11,14 +11,12 @@ import '../utils/game_logic.dart'; // Contains checkWinner3 for 3x3
 import '../services/sound_service.dart';
 import '../services/vibration_service.dart';
 import '../services/database_service.dart';
-import '../services/achievement_service.dart';
 import '../models/game_replay.dart';
 
 class GameBloc extends Bloc<GameEvent, GameState> {
   final SoundService _soundService = SoundService();
   final VibrationService _vibrationService = VibrationService();
   final DatabaseService _db = DatabaseService.instance;
-  final AchievementService _achievementService = AchievementService();
 
   final List<int> _moveHistory = []; // Track moves for replay
 
