@@ -7,7 +7,10 @@ import 'blocs/game_bloc.dart';
 import 'blocs/settings_cubit.dart';
 import 'blocs/statistics_cubit.dart';
 import 'screens/splash_screen.dart';
+import 'screens/main_menu_screen.dart';
+import 'screens/game_setup_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/game_result_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/statistics_screen.dart';
 import 'screens/achievements_screen.dart';
@@ -54,7 +57,10 @@ class MyApp extends StatelessWidget {
           initialRoute: '/',
           routes: {
             '/': (context) => const SplashScreen(),
-            '/home': (context) => const HomeScreen(),
+            '/menu': (context) => const MainMenuScreen(),
+            '/game-setup': (context) => const GameSetupScreen(),
+            '/game-play': (context) => const HomeScreen(),
+            '/game-result': (context) => const GameResultScreen(),
             '/settings': (context) => const SettingsScreen(),
             '/statistics': (context) => const StatisticsScreen(),
             '/achievements': (context) => const AchievementsScreen(),
