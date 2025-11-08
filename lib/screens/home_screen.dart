@@ -599,7 +599,12 @@ class HomeScreen extends StatelessWidget {
                                 color: const Color(0xFF8b5cf6),
                               ),
                               const SizedBox(width: 8),
-                              Text(mode == GameMode.PvP ? 'Player vs Player' : 'Player vs AI'),
+                              Flexible(
+                                child: Text(
+                                  mode == GameMode.PvP ? 'Player vs Player' : 'Player vs AI',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                             ],
                           ),
                         );
@@ -887,48 +892,52 @@ class HomeScreen extends StatelessWidget {
                 ),
               ],
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: const Icon(
-                    Icons.person_rounded,
-                    color: Colors.white,
-                    size: 40,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Player',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Raleway',
-                  ),
-                ),
-                const SizedBox(height: 4),
-                BlocBuilder<StatisticsCubit, GameStats>(
-                  builder: (context, stats) {
-                    final winRate = stats.totalGames > 0
-                        ? ((stats.wins / stats.totalGames) * 100).toStringAsFixed(1)
-                        : '0.0';
-                    return Text(
-                      'Win Rate: $winRate%',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+            child: BlocBuilder<SettingsCubit, AppSettings>(
+              builder: (context, settings) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                    );
-                  },
-                ),
-              ],
+                      child: const Icon(
+                        Icons.person_rounded,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      settings.playerName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Raleway',
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    BlocBuilder<StatisticsCubit, GameStats>(
+                      builder: (context, stats) {
+                        final winRate = stats.totalGames > 0
+                            ? ((stats.wins / stats.totalGames) * 100).toStringAsFixed(1)
+                            : '0.0';
+                        return Text(
+                          'Win Rate: $winRate%',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           Expanded(

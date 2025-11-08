@@ -211,11 +211,33 @@ class AboutScreen extends StatelessWidget {
                 Icon(Icons.code, size: 24),
                 SizedBox(width: 12),
                 Text(
-                  'Developer',
+                  'Developers',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Row(
+              children: [
+                Icon(Icons.person, size: 18, color: Colors.grey),
+                SizedBox(width: 8),
+                Text(
+                  'Ahmed Hamdy',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Row(
+              children: [
+                Icon(Icons.person, size: 18, color: Colors.grey),
+                SizedBox(width: 8),
+                Text(
+                  'Ademero',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                 ),
               ],
             ),
