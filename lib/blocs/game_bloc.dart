@@ -84,9 +84,17 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         _soundService.playDraw();
         _vibrationService.medium();
       } else {
-        // Check if player won or AI won
+        // Check if player won or AI/opponent won
         final winner = result['winner'] as String;
-        final isPlayerWin = (state.gameMode == GameMode.PvP) || winner == 'X';
+        bool isPlayerWin;
+
+        if (state.gameMode == GameMode.PvP) {
+          // In PvP mode, both are players, so any win is a "player win"
+          isPlayerWin = true;
+        } else {
+          // In PvC mode, check if winner matches the player's chosen side
+          isPlayerWin = winner == state.playerSide;
+        }
 
         if (isPlayerWin) {
           _soundService.playWin();
@@ -377,8 +385,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   FutureOr<void> _onSetPlayerSide(
       SetPlayerSide event, Emitter<GameState> emit) {
-    // Update the current player based on the chosen side.
-    emit(state.copyWith(currentPlayer: event.side));
+    // Update the current player and playerSide based on the chosen side.
+    emit(state.copyWith(
+      currentPlayer: event.side,
+      playerSide: event.side,
+    ));
     return null;
   }
 
