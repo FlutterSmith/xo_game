@@ -148,7 +148,10 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       emit(state.copyWith(aiMessage: "Game Over - No AI move"));
       return null;
     }
-    final move = _getAIMove(state.board, state.aiDifficulty, 'O', 'X');
+    // Determine AI and human players based on player's chosen side
+    final aiPlayer = state.playerSide == 'X' ? 'O' : 'X';
+    final humanPlayer = state.playerSide;
+    final move = _getAIMove(state.board, state.aiDifficulty, aiPlayer, humanPlayer);
     if (move == -1) {
       emit(state.copyWith(aiMessage: "No valid move for AI"));
       return null;
