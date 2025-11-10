@@ -44,9 +44,22 @@ class DatabaseService {
     final path = join(dbPath, filePath);
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB,
+      onUpgrade: _upgradeDB,
     );
+  }
+
+  Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add new columns for win streak tracking
+      await db.execute(
+          'ALTER TABLE game_stats ADD COLUMN currentWinStreak INTEGER NOT NULL DEFAULT 0');
+      await db.execute(
+          'ALTER TABLE game_stats ADD COLUMN longestWinStreak INTEGER NOT NULL DEFAULT 0');
+      await db.execute(
+          'ALTER TABLE game_stats ADD COLUMN perfectGames INTEGER NOT NULL DEFAULT 0');
+    }
   }
 
   Future<void> _initWebDefaults() async {
@@ -213,6 +226,9 @@ class DatabaseService {
         board3x3Games INTEGER NOT NULL DEFAULT 0,
         board4x4Games INTEGER NOT NULL DEFAULT 0,
         board5x5Games INTEGER NOT NULL DEFAULT 0,
+        currentWinStreak INTEGER NOT NULL DEFAULT 0,
+        longestWinStreak INTEGER NOT NULL DEFAULT 0,
+        perfectGames INTEGER NOT NULL DEFAULT 0,
         lastUpdated TEXT NOT NULL
       )
     ''');
