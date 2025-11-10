@@ -67,6 +67,7 @@ class MyApp extends StatelessWidget {
             '/tutorial': (context) => const TutorialScreen(),
             '/about': (context) => const AboutScreen(),
             '/replays': (context) => const ReplayViewerScreen(),
+            '/replay-viewer': (context) => const ReplayViewerScreen(),
             '/history': (context) => const HistoryScreen(),
           },
         );
