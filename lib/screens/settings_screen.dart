@@ -39,13 +39,6 @@ class SettingsScreen extends StatelessWidget {
               _buildThemeSelector(context, settings),
               const SizedBox(height: 24),
 
-              // Game Defaults Section
-              _buildSectionHeader('Game Defaults'),
-              _buildBoardSizeSelector(context, settings),
-              const SizedBox(height: 8),
-              _buildAIDifficultySelector(context, settings),
-              const SizedBox(height: 24),
-
               // Tutorial Section
               _buildSectionHeader('Help & Tutorial'),
               _buildTutorialButton(context, settings),
@@ -211,85 +204,6 @@ class SettingsScreen extends StatelessWidget {
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 color: isSelected ? Colors.blue : null,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBoardSizeSelector(BuildContext context, AppSettings settings) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.grid_3x3),
-                SizedBox(width: 12),
-                Text(
-                  'Default Board Size',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            SegmentedButton<int>(
-              segments: const [
-                ButtonSegment(value: 3, label: Text('3x3')),
-                ButtonSegment(value: 4, label: Text('4x4')),
-                ButtonSegment(value: 5, label: Text('5x5')),
-              ],
-              selected: {settings.defaultBoardSize},
-              onSelectionChanged: (Set<int> newSelection) {
-                context
-                    .read<SettingsCubit>()
-                    .updateDefaultBoardSize(newSelection.first);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAIDifficultySelector(BuildContext context, AppSettings settings) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.psychology),
-                SizedBox(width: 12),
-                Text(
-                  'AI Difficulty',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: settings.aiDifficulty,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'easy', child: Text('Easy')),
-                DropdownMenuItem(value: 'medium', child: Text('Medium')),
-                DropdownMenuItem(value: 'hard', child: Text('Hard')),
-                DropdownMenuItem(value: 'adaptive', child: Text('Adaptive')),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  context.read<SettingsCubit>().updateAIDifficulty(value);
-                }
-              },
             ),
           ],
         ),
