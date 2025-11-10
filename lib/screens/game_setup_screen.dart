@@ -584,7 +584,10 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
   void _startGame() {
     final gameBloc = context.read<GameBloc>();
 
-    // Apply all settings
+    // Reset game first to ensure clean slate
+    gameBloc.add(const ResetGame());
+
+    // Then apply all settings
     gameBloc.add(UpdateBoardSettings(selectedBoardSize, selectedBoardSize));
     gameBloc.add(ChangeDifficulty(selectedDifficulty));
     gameBloc.add(SetPlayerSide(playerSide));
@@ -593,9 +596,6 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
       gameBloc.add(const ToggleTimedMode());
       gameBloc.add(SetTimeLimit(timeLimit));
     }
-
-    // Reset game with new settings
-    gameBloc.add(const ResetGame());
 
     // Navigate to game play
     Navigator.of(context).pushReplacementNamed('/game-play');
