@@ -214,99 +214,113 @@ class _SplashScreenState extends State<SplashScreen>
 
   Widget _buildAnimatedLogo() {
     return AnimatedBuilder(
-      animation: _rotationController,
+      animation: Listenable.merge([_rotationController, _particleController]),
       builder: (context, child) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            // Outer rotating ring
-            Transform.rotate(
-              angle: _rotationAnimation.value,
-              child: Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    width: 3,
-                    color: const Color(0xFFec4899).withOpacity(0.3),
-                  ),
-                ),
-              ),
-            ),
+        // Calculate dancing movement (circular motion)
+        final angle = _particleController.value * 2 * pi;
+        final offsetX = sin(angle) * 15; // Move 15 pixels in X
+        final offsetY = cos(angle * 1.5) * 15; // Move 15 pixels in Y (different speed)
 
-            // Inner rotating ring (opposite direction)
-            Transform.rotate(
-              angle: -_rotationAnimation.value,
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    width: 3,
-                    color: const Color(0xFF8b5cf6).withOpacity(0.3),
-                  ),
-                ),
-              ),
-            ),
+        // Add subtle scale pulsing
+        final scale = 1.0 + (sin(_particleController.value * 2 * pi) * 0.05);
 
-            // Center glassmorphism container with X and O
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    const Color(0xFFec4899).withOpacity(0.2),
-                    const Color(0xFF8b5cf6).withOpacity(0.2),
-                  ],
-                ),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.2),
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFec4899).withOpacity(0.4),
-                    blurRadius: 30,
-                    spreadRadius: 5,
-                  ),
-                  BoxShadow(
-                    color: const Color(0xFF8b5cf6).withOpacity(0.4),
-                    blurRadius: 30,
-                    spreadRadius: 5,
-                  ),
-                ],
-              ),
-              child: Center(
-                child: ShaderMask(
-                  shaderCallback: (bounds) {
-                    return const LinearGradient(
-                      colors: [
-                        Color(0xFFec4899),
-                        Color(0xFF8b5cf6),
-                        Color(0xFF06b6d4),
-                      ],
-                    ).createShader(bounds);
-                  },
-                  child: const Text(
-                    'X O',
-                    style: TextStyle(
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontFamily: 'Poppins',
-                      letterSpacing: 8,
+        return Transform.translate(
+          offset: Offset(offsetX, offsetY),
+          child: Transform.scale(
+            scale: scale,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Outer rotating ring
+                Transform.rotate(
+                  angle: _rotationAnimation.value,
+                  child: Container(
+                    width: 180,
+                    height: 180,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        width: 3,
+                        color: const Color(0xFFec4899).withOpacity(0.3),
+                      ),
                     ),
                   ),
                 ),
-              ),
+
+                // Inner rotating ring (opposite direction)
+                Transform.rotate(
+                  angle: -_rotationAnimation.value,
+                  child: Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        width: 3,
+                        color: const Color(0xFF8b5cf6).withOpacity(0.3),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Center glassmorphism container with X and O
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFFec4899).withOpacity(0.2),
+                        const Color(0xFF8b5cf6).withOpacity(0.2),
+                      ],
+                    ),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.2),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFec4899).withOpacity(0.4),
+                        blurRadius: 30,
+                        spreadRadius: 5,
+                      ),
+                      BoxShadow(
+                        color: const Color(0xFF8b5cf6).withOpacity(0.4),
+                        blurRadius: 30,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: ShaderMask(
+                      shaderCallback: (bounds) {
+                        return const LinearGradient(
+                          colors: [
+                            Color(0xFFec4899),
+                            Color(0xFF8b5cf6),
+                            Color(0xFF06b6d4),
+                          ],
+                        ).createShader(bounds);
+                      },
+                      child: const Text(
+                        'X O',
+                        style: TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontFamily: 'Poppins',
+                          letterSpacing: 8,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
