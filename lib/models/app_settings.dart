@@ -5,8 +5,6 @@ class AppSettings {
   final bool soundEnabled;
   final bool vibrationEnabled;
   final String themeMode; // 'light', 'dark', 'system'
-  final String aiDifficulty; // 'easy', 'medium', 'hard', 'adaptive'
-  final int defaultBoardSize; // 3, 4, or 5
   final bool showTutorial; // Show tutorial on next launch
   final String language; // For future localization
 
@@ -16,8 +14,6 @@ class AppSettings {
     required this.soundEnabled,
     required this.vibrationEnabled,
     required this.themeMode,
-    required this.aiDifficulty,
-    required this.defaultBoardSize,
     required this.showTutorial,
     required this.language,
   });
@@ -29,8 +25,6 @@ class AppSettings {
       'soundEnabled': soundEnabled ? 1 : 0,
       'vibrationEnabled': vibrationEnabled ? 1 : 0,
       'themeMode': themeMode,
-      'aiDifficulty': aiDifficulty,
-      'defaultBoardSize': defaultBoardSize,
       'showTutorial': showTutorial ? 1 : 0,
       'language': language,
     };
@@ -51,8 +45,6 @@ class AppSettings {
       soundEnabled: _toBool(map['soundEnabled']),
       vibrationEnabled: _toBool(map['vibrationEnabled']),
       themeMode: map['themeMode'] as String,
-      aiDifficulty: map['aiDifficulty'] as String,
-      defaultBoardSize: map['defaultBoardSize'] as int,
       showTutorial: _toBool(map['showTutorial']),
       language: map['language'] as String,
     );
@@ -65,8 +57,6 @@ class AppSettings {
       soundEnabled: true,
       vibrationEnabled: true,
       themeMode: 'dark',
-      aiDifficulty: 'medium',
-      defaultBoardSize: 3,
       showTutorial: true,
       language: 'en',
     );
@@ -78,8 +68,6 @@ class AppSettings {
     bool? soundEnabled,
     bool? vibrationEnabled,
     String? themeMode,
-    String? aiDifficulty,
-    int? defaultBoardSize,
     bool? showTutorial,
     String? language,
   }) {
@@ -89,8 +77,6 @@ class AppSettings {
       soundEnabled: soundEnabled ?? this.soundEnabled,
       vibrationEnabled: vibrationEnabled ?? this.vibrationEnabled,
       themeMode: themeMode ?? this.themeMode,
-      aiDifficulty: aiDifficulty ?? this.aiDifficulty,
-      defaultBoardSize: defaultBoardSize ?? this.defaultBoardSize,
       showTutorial: showTutorial ?? this.showTutorial,
       language: language ?? this.language,
     );
