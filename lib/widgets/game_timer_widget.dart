@@ -24,7 +24,7 @@ class _GameTimerWidgetState extends State<GameTimerWidget> {
 
   void _startTimer(GameBloc bloc) {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       bloc.add(const TimerTick());
     });
   }

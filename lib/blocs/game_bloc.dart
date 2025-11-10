@@ -121,6 +121,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         redoStack: [],
         gameHistory: newHistory,
         aiMessage: "",
+        isTimerActive: false, // Stop timer when game ends
       ));
       return;
     } else {
@@ -243,6 +244,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       undoStack: [],
       redoStack: [],
       aiMessage: "",
+      elapsedTime: 0,
+      isTimerActive: state.timedMode, // Activate timer if in timed mode
     ));
     return null;
   }
@@ -293,6 +296,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       undoStack: [],
       redoStack: [],
       aiMessage: "",
+      elapsedTime: 0,
+      isTimerActive: false, // Timer will be activated after all settings are applied
     ));
     return null;
   }
@@ -475,10 +480,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   // Timer event handlers
   // TODO: Implement full-game timer logic in Phase 4
   FutureOr<void> _onToggleTimedMode(ToggleTimedMode event, Emitter<GameState> emit) {
+    final newTimedMode = !state.timedMode;
     emit(state.copyWith(
-      timedMode: !state.timedMode,
+      timedMode: newTimedMode,
       elapsedTime: 0,
-      isTimerActive: false,
+      isTimerActive: newTimedMode, // Activate timer if enabling timed mode
     ));
   }
 
