@@ -22,6 +22,7 @@ class StatisticsCubit extends Cubit<GameStats> {
     required String gameMode, // 'PvP', 'PvC'
     String? difficulty, // AI difficulty if PvC
     required int boardSize,
+    bool isPerfectGame = false, // Whether opponent didn't score
   }) async {
     final now = DateTime.now().toIso8601String();
 
@@ -45,14 +46,30 @@ class StatisticsCubit extends Cubit<GameStats> {
     int board3x3Games = state.board3x3Games;
     int board4x4Games = state.board4x4Games;
     int board5x5Games = state.board5x5Games;
+    int currentWinStreak = state.currentWinStreak;
+    int longestWinStreak = state.longestWinStreak;
+    int perfectGames = state.perfectGames;
 
     // Update overall stats
     if (result == 'win') {
       wins++;
+      // Update win streak
+      currentWinStreak++;
+      if (currentWinStreak > longestWinStreak) {
+        longestWinStreak = currentWinStreak;
+      }
+      // Track perfect game
+      if (isPerfectGame) {
+        perfectGames++;
+      }
     } else if (result == 'loss') {
       losses++;
+      // Reset win streak on loss
+      currentWinStreak = 0;
     } else {
       draws++;
+      // Reset win streak on draw
+      currentWinStreak = 0;
     }
 
     // Update mode-specific stats
@@ -137,6 +154,9 @@ class StatisticsCubit extends Cubit<GameStats> {
       board3x3Games: board3x3Games,
       board4x4Games: board4x4Games,
       board5x5Games: board5x5Games,
+      currentWinStreak: currentWinStreak,
+      longestWinStreak: longestWinStreak,
+      perfectGames: perfectGames,
       lastUpdated: now,
     );
 

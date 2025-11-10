@@ -88,6 +88,16 @@ class _GameResultScreenState extends State<GameResultScreen>
         }
       }
 
+      // Check if it's a perfect game (win without opponent scoring)
+      bool isPerfectGame = false;
+      if (result == 'win') {
+        // Count marks on the board
+        final playerMark = gameState.playerSide;
+        final opponentMark = playerMark == 'X' ? 'O' : 'X';
+        final opponentMoves = gameState.board.where((cell) => cell == opponentMark).length;
+        isPerfectGame = opponentMoves == 0;
+      }
+
       // Record game in statistics
       statisticsCubit.recordGame(
         result: result,
@@ -96,6 +106,7 @@ class _GameResultScreenState extends State<GameResultScreen>
             ? gameState.aiDifficulty.toString().split('.').last
             : null,
         boardSize: gameState.boardSize,
+        isPerfectGame: isPerfectGame,
       );
 
       // Save game replay
