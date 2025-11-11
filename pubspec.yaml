@@ -40,6 +40,7 @@ flutter:
     - assets/icon/icon.png
     - assets/fonts/
     - assets/sounds/
+    - assets/sounds/music/
 
 
 
