@@ -40,6 +40,80 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     );
 
     _animationController.forward();
+
+    // Show name prompt dialog on first launch
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final settings = context.read<SettingsCubit>().state;
+      if (settings.playerName == 'Player') {
+        _showNamePromptDialog();
+      }
+    });
+  }
+
+  void _showNamePromptDialog() {
+    final TextEditingController nameController = TextEditingController();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(
+                Icons.person_add,
+                color: isDark ? const Color(0xFFec4899) : Colors.blue,
+              ),
+              const SizedBox(width: 12),
+              const Text('Welcome!'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Please enter your name to personalize your gaming experience:',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: nameController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'Your Name',
+                  hintText: 'Enter your name',
+                  prefixIcon: const Icon(Icons.person),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                textCapitalization: TextCapitalization.words,
+                onSubmitted: (value) {
+                  if (value.trim().isNotEmpty) {
+                    context.read<SettingsCubit>().updatePlayerName(value.trim());
+                    Navigator.of(dialogContext).pop();
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                final name = nameController.text.trim();
+                if (name.isNotEmpty) {
+                  context.read<SettingsCubit>().updatePlayerName(name);
+                  Navigator.of(dialogContext).pop();
+                }
+              },
+              child: const Text('Continue'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
