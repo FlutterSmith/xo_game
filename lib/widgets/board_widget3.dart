@@ -30,6 +30,10 @@ class BoardWidget3 extends StatelessWidget {
                 highlight: highlight,
                 onTap: () {
                   if (state.board[index] == '' && !state.gameOver) {
+                    // In PvC mode, only allow moves when it's the player's turn
+                    if (state.gameMode == GameMode.PvC && state.currentPlayer != state.playerSide) {
+                      return; // It's not the player's turn
+                    }
                     context.read<GameBloc>().add(MoveMade(index));
                   }
                 },
