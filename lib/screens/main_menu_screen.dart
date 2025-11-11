@@ -92,7 +92,9 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                 textCapitalization: TextCapitalization.words,
                 onSubmitted: (value) {
                   if (value.trim().isNotEmpty) {
-                    context.read<SettingsCubit>().updatePlayerName(value.trim());
+                    context
+                        .read<SettingsCubit>()
+                        .updatePlayerName(value.trim());
                     Navigator.of(dialogContext).pop();
                   }
                 },
@@ -164,7 +166,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Welcome back,',
+                                  'Welcome ,',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: isDark
@@ -260,7 +262,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Professional Tic Tac Toe',
+                    ' Tic Tac Toe',
                     style: TextStyle(
                       fontSize: 16,
                       color:
@@ -322,8 +324,8 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                             Icons.play_arrow_rounded,
                             const Color(0xFFec4899),
                             const Color(0xFF8b5cf6),
-                            () => Navigator.of(context)
-                                .pushNamed('/game-setup'),
+                            () =>
+                                Navigator.of(context).pushNamed('/game-setup'),
                             isDark,
                           ),
                           const SizedBox(height: 16),
@@ -344,8 +346,8 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                             Icons.emoji_events_rounded,
                             const Color(0xFF06b6d4),
                             const Color(0xFF16f2b3),
-                            () =>
-                                Navigator.of(context).pushNamed('/achievements'),
+                            () => Navigator.of(context)
+                                .pushNamed('/achievements'),
                             isDark,
                           ),
                           const SizedBox(height: 16),
