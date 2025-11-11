@@ -18,12 +18,21 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
   bool timedMode = false;
   int timeLimit = 30;
   String playerSide = 'X';
+  bool _isNavigating = false;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
+    return BlocListener<GameBloc, GameState>(
+      listener: (context, state) {
+        // Navigate when board size is correctly set and we're ready to go
+        if (_isNavigating && state.boardSize == selectedBoardSize) {
+          _isNavigating = false;
+          Navigator.of(context).pushReplacementNamed('/game-play');
+        }
+      },
+      child: Scaffold(
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -128,6 +137,8 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
           ),
         ),
       ),
+      ),
+    ),
     );
   }
 
@@ -584,6 +595,11 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
   void _startGame() {
     final gameBloc = context.read<GameBloc>();
 
+    // Set flag to trigger navigation when board size is updated
+    setState(() {
+      _isNavigating = true;
+    });
+
     // Apply board settings (this also resets the game state)
     // Win conditions: 3x3 needs 3 in a row, 4x4 needs 4, 5x5 needs 4
     final winCondition = selectedBoardSize == 3 ? 3 : 4;
@@ -596,11 +612,6 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
       gameBloc.add(SetTimeLimit(timeLimit));
     }
 
-    // Small delay to ensure events are processed before navigation
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/game-play');
-      }
-    });
+    // Navigation will happen in BlocListener when board size is updated
   }
 }
