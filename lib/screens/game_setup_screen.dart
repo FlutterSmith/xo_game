@@ -138,7 +138,6 @@ class _GameSetupScreenState extends State<GameSetupScreen> {
           ),
         ),
       ),
-      ),
     ),
     );
   }
