@@ -109,6 +109,7 @@ class StatisticsCubit extends Cubit<GameStats> {
             break;
           case 'hard':
           case 'adaptive':
+          case 'impossible':
             if (result == 'win') {
               hardWins++;
             } else if (result == 'loss') {
