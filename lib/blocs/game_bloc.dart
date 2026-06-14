@@ -132,11 +132,16 @@ class GameBloc extends Bloc<GameEvent, GameState> {
         undoStack: newUndoStack,
         redoStack: [],
         aiMessage: "",
-        // TODO: Implement full-game timer logic in Phase 4
-        isTimerActive: state.timedMode, // Activate timer if in timed mode
+        // Per-move timer: restart the countdown for whoever moves next.
+        elapsedTime: 0,
+        isTimerActive: state.timedMode,
       ));
-      if (state.gameMode == GameMode.PvC && nextPlayer == 'O') {
-        await Future.delayed(const Duration(milliseconds: 300));
+      // Trigger the AI only when the next turn actually belongs to the AI.
+      // (Fixes the double-move bug when the player chose 'O': the AI is 'X',
+      // so a hardcoded `nextPlayer == 'O'` check used to auto-play the human.)
+      final aiPlayer = state.playerSide == 'X' ? 'O' : 'X';
+      if (state.gameMode == GameMode.PvC && nextPlayer == aiPlayer) {
+        await Future.delayed(const Duration(milliseconds: 350));
         add(const AITurn());
       }
       return;
@@ -317,47 +322,41 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   int _getAIMove(List<String> board, AIDifficulty difficulty, String aiPlayer,
       String humanPlayer) {
+    final int available = board.where((e) => e == '').length;
+
     if (state.boardSize == 5) {
-      // For a 5x5 board, limit the search depth to 3 on hard difficulty.
-      if (difficulty == AIDifficulty.hard) {
-        return _minimaxMove(board, aiPlayer, humanPlayer, 3);
-      } else if (difficulty == AIDifficulty.medium) {
-        return _minimaxMove(board, aiPlayer, humanPlayer, 2);
-      } else if (difficulty == AIDifficulty.impossible) {
-        int available = board.where((e) => e == '').length;
-        int depthLimit = available < 5 ? available : 3;
-        return _minimaxMove(board, aiPlayer, humanPlayer, depthLimit);
-      } else {
-        return _randomMove(board);
-      }
-    } else if (state.boardSize == 4) {
-      // For a 4x4 board, limit the search depth to 4 on hard difficulty.
-      if (difficulty == AIDifficulty.hard) {
-        return _minimaxMove(board, aiPlayer, humanPlayer, 4);
-      } else if (difficulty == AIDifficulty.medium) {
-        return _minimaxMove(board, aiPlayer, humanPlayer, 2);
-      } else if (difficulty == AIDifficulty.impossible) {
-        int available = board.where((e) => e == '').length;
-        int depthLimit = available < 5 ? available : 4;
-        return _minimaxMove(board, aiPlayer, humanPlayer, depthLimit);
-      } else {
-        return _randomMove(board);
-      }
-    } else {
-      // For a 3x3 board, use full depth on hard.
       switch (difficulty) {
         case AIDifficulty.easy:
           return _randomMove(board);
         case AIDifficulty.medium:
           return _minimaxMove(board, aiPlayer, humanPlayer, 2);
         case AIDifficulty.hard:
-          return _minimaxMove(board, aiPlayer, humanPlayer, board.length);
+          return _minimaxMove(board, aiPlayer, humanPlayer, 3);
         case AIDifficulty.impossible:
-          int available = board.where((e) => e == '').length;
-          int depthLimit = available < 5 ? available : 3;
-          return _minimaxMove(board, aiPlayer, humanPlayer, depthLimit);
-        default:
+          // Deeper than hard; alpha-beta + move ordering keep it responsive.
+          return _minimaxMove(board, aiPlayer, humanPlayer, available <= 13 ? 5 : 4);
+      }
+    } else if (state.boardSize == 4) {
+      switch (difficulty) {
+        case AIDifficulty.easy:
           return _randomMove(board);
+        case AIDifficulty.medium:
+          return _minimaxMove(board, aiPlayer, humanPlayer, 2);
+        case AIDifficulty.hard:
+          return _minimaxMove(board, aiPlayer, humanPlayer, 4);
+        case AIDifficulty.impossible:
+          return _minimaxMove(board, aiPlayer, humanPlayer, available <= 8 ? available : 6);
+      }
+    } else {
+      // 3x3: hard and impossible both solve the game (unbeatable).
+      switch (difficulty) {
+        case AIDifficulty.easy:
+          return _randomMove(board);
+        case AIDifficulty.medium:
+          return _minimaxMove(board, aiPlayer, humanPlayer, 2);
+        case AIDifficulty.hard:
+        case AIDifficulty.impossible:
+          return _minimaxMove(board, aiPlayer, humanPlayer, board.length);
       }
     }
   }
@@ -373,21 +372,38 @@ class GameBloc extends Bloc<GameEvent, GameState> {
 
   int _minimaxMove(
       List<String> board, String aiPlayer, String humanPlayer, int depthLimit) {
-    int bestScore = -1000;
+    int bestScore = -1000000;
     int bestMove = -1;
-    for (int i = 0; i < board.length; i++) {
-      if (board[i] == '') {
-        board[i] = aiPlayer;
-        int score =
-            _minimax(board, 0, false, aiPlayer, humanPlayer, depthLimit);
-        board[i] = '';
-        if (score > bestScore) {
-          bestScore = score;
-          bestMove = i;
-        }
+    for (final i in _orderedMoves(board)) {
+      board[i] = aiPlayer;
+      int score = _minimax(board, 0, false, aiPlayer, humanPlayer, depthLimit,
+          -1000000, 1000000);
+      board[i] = '';
+      if (score > bestScore || bestMove == -1) {
+        bestScore = score;
+        bestMove = i;
       }
     }
     return bestMove;
+  }
+
+  /// Empty cells ordered center-first — improves alpha-beta pruning a lot.
+  List<int> _orderedMoves(List<String> board) {
+    final n = state.boardSize;
+    final center = (n - 1) / 2.0;
+    final moves = <int>[];
+    for (int i = 0; i < board.length; i++) {
+      if (board[i] == '') moves.add(i);
+    }
+    moves.sort((a, b) =>
+        _distToCenter(a, n, center).compareTo(_distToCenter(b, n, center)));
+    return moves;
+  }
+
+  double _distToCenter(int index, int n, double center) {
+    final dr = (index ~/ n) - center;
+    final dc = (index % n) - center;
+    return dr * dr + dc * dc;
   }
 
   FutureOr<void> _onSetPlayerSide(
@@ -408,7 +424,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
   }
 
   int _minimax(List<String> board, int depth, bool isMaximizing,
-      String aiPlayer, String humanPlayer, int depthLimit) {
+      String aiPlayer, String humanPlayer, int depthLimit, int alpha, int beta) {
     Map<String, dynamic>? result;
     if (state.boardSize == 3) {
       result = checkWinner3(board);
@@ -418,38 +434,39 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       result = checkWinner5x5(board);
     }
 
-    if (result != null || depth >= depthLimit) {
-      if (result != null) {
-        if (result['winner'] == aiPlayer) return 10 - depth;
-        if (result['winner'] == humanPlayer) return depth - 10;
-        return 0;
-      }
-      return 0;
+    if (result != null) {
+      // Prefer faster wins / slower losses. Magnitude (100) stays well above
+      // any reachable depth so a deep win never reads as a loss.
+      if (result['winner'] == aiPlayer) return 100 - depth;
+      if (result['winner'] == humanPlayer) return depth - 100;
+      return 0; // draw
     }
+    if (depth >= depthLimit) return 0;
+
     if (isMaximizing) {
-      int bestScore = -1000;
-      for (int i = 0; i < board.length; i++) {
-        if (board[i] == '') {
-          board[i] = aiPlayer;
-          int score = _minimax(
-              board, depth + 1, false, aiPlayer, humanPlayer, depthLimit);
-          board[i] = '';
-          bestScore = bestScore < score ? score : bestScore;
-        }
+      int best = -1000000;
+      for (final i in _orderedMoves(board)) {
+        board[i] = aiPlayer;
+        final score = _minimax(board, depth + 1, false, aiPlayer, humanPlayer,
+            depthLimit, alpha, beta);
+        board[i] = '';
+        if (score > best) best = score;
+        if (best > alpha) alpha = best;
+        if (beta <= alpha) break; // prune
       }
-      return bestScore;
+      return best;
     } else {
-      int bestScore = 1000;
-      for (int i = 0; i < board.length; i++) {
-        if (board[i] == '') {
-          board[i] = humanPlayer;
-          int score = _minimax(
-              board, depth + 1, true, aiPlayer, humanPlayer, depthLimit);
-          board[i] = '';
-          bestScore = bestScore > score ? score : bestScore;
-        }
+      int best = 1000000;
+      for (final i in _orderedMoves(board)) {
+        board[i] = humanPlayer;
+        final score = _minimax(board, depth + 1, true, aiPlayer, humanPlayer,
+            depthLimit, alpha, beta);
+        board[i] = '';
+        if (score < best) best = score;
+        if (best < beta) beta = best;
+        if (beta <= alpha) break; // prune
       }
-      return bestScore;
+      return best;
     }
   }
 
@@ -479,8 +496,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     }
   }
 
-  // Timer event handlers
-  // TODO: Implement full-game timer logic in Phase 4
+  // Timer event handlers (per-move countdown; the BLoC resets elapsed time on
+  // every move so each turn gets a fresh clock).
   FutureOr<void> _onToggleTimedMode(ToggleTimedMode event, Emitter<GameState> emit) {
     final newTimedMode = !state.timedMode;
     emit(state.copyWith(
@@ -532,9 +549,14 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     // Stop the timer
     emit(state.copyWith(isTimerActive: false));
 
-    // In PvP mode or when it's player's turn in PvC, forfeit the turn
-    if (state.gameMode == GameMode.PvP || state.currentPlayer == 'X') {
-      // End the game - current player loses due to timeout
+    // Whose turn ran out? In PvP it's always a human; in PvC the human is the
+    // side whose mark equals currentPlayer. (Fixes the old assumption that the
+    // human is always 'X'.)
+    final isHumanTurn = state.gameMode == GameMode.PvP ||
+        state.currentPlayer == state.playerSide;
+
+    if (isHumanTurn) {
+      // Current player loses on timeout.
       final winner = state.currentPlayer == 'X' ? 'O' : 'X';
       final outcome = "Winner: $winner (Timeout)";
 
@@ -544,6 +566,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       emit(state.copyWith(
         gameOver: true,
         resultMessage: outcome,
+        winningCells: const [],
         isTimerActive: false,
       ));
 
@@ -551,17 +574,8 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       return null;
     }
 
-    // If AI's turn timed out, make a random move
-    final emptyIndices = <int>[];
-    for (int i = 0; i < state.board.length; i++) {
-      if (state.board[i] == '') emptyIndices.add(i);
-    }
-
-    if (emptyIndices.isNotEmpty) {
-      final randomIndex = emptyIndices[Random().nextInt(emptyIndices.length)];
-      add(MoveMade(randomIndex));
-    }
-
+    // AI's turn timed out (rare) — just let the AI move now.
+    add(const AITurn());
     return null;
   }
 }
