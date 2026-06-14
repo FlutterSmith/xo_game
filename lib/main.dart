@@ -17,7 +17,6 @@ import 'screens/achievements_screen.dart';
 import 'screens/tutorial_screen.dart';
 import 'screens/about_screen.dart';
 import 'screens/replay_viewer_screen.dart';
-import 'screens/history_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -67,8 +66,6 @@ class MyApp extends StatelessWidget {
             '/tutorial': (context) => const TutorialScreen(),
             '/about': (context) => const AboutScreen(),
             '/replays': (context) => const ReplayViewerScreen(),
-            '/replay-viewer': (context) => const ReplayViewerScreen(),
-            '/history': (context) => const HistoryScreen(),
           },
         );
       },

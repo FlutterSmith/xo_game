@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:advanced_xo_game/widgets/common/common.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -10,15 +10,9 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
-  late AnimationController _mainController;
-  late AnimationController _rotationController;
-  late AnimationController _particleController;
-  late AnimationController _pulseController;
-
-  late Animation<double> _fadeInAnimation;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _rotationAnimation;
-  late Animation<double> _glowAnimation;
+  // Gentle breathing glow for the logo — calm, not a slot machine.
+  late final AnimationController _glowController;
+  late final Animation<double> _glow;
 
   double _progress = 0.0;
 
@@ -26,61 +20,19 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Main animation controller
-    _mainController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
-      vsync: this,
-    );
-
-    // Rotation animation for X and O
-    _rotationController = AnimationController(
-      duration: const Duration(milliseconds: 3000),
-      vsync: this,
-    )..repeat();
-
-    // Particle floating animation
-    _particleController = AnimationController(
-      duration: const Duration(milliseconds: 4000),
+    _glowController = AnimationController(
+      duration: const Duration(milliseconds: 1800),
       vsync: this,
     )..repeat(reverse: true);
 
-    // Pulse/glow animation
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _fadeInAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
-      ),
+    _glow = Tween<double>(begin: 0.35, end: 1.0).animate(
+      CurvedAnimation(parent: _glowController, curve: AppMotion.emphasized),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _mainController,
-        curve: const Interval(0.0, 0.7, curve: Curves.elasticOut),
-      ),
-    );
-
-    _rotationAnimation = Tween<double>(begin: 0.0, end: 2 * pi).animate(
-      _rotationController,
-    );
-
-    _glowAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _pulseController,
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    _mainController.forward();
-
-    // Simulate loading progress
+    // Simulate loading progress (unchanged cadence).
     _simulateLoading();
 
-    // Navigate after splash
+    // Navigate after splash (unchanged timing & destination).
     Timer(const Duration(milliseconds: 3500), () {
       if (mounted) {
         Navigator.of(context).pushReplacementNamed('/menu');
@@ -106,360 +58,205 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   void dispose() {
-    _mainController.dispose();
-    _rotationController.dispose();
-    _particleController.dispose();
-    _pulseController.dispose();
+    _glowController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final theme = Theme.of(context);
+    final palette = AppPalette.of(context);
 
-    return Scaffold(
-      body: Container(
-        width: size.width,
-        height: size.height,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0d1224),
-              Color(0xFF1e1436),
-              Color(0xFF0f172a),
-            ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Animated particles/symbols in background
-            ...List.generate(8, (index) => _buildFloatingSymbol(index, size)),
+    return AppScaffold(
+      body: Center(
+        child: Padding(
+          padding: AppSpacing.page,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Brand logo: glassy ring with the XO mark + tasteful glow ──
+              FadeSlideIn(
+                duration: AppMotion.slow,
+                beginOffset: const Offset(0, 0.04),
+                child: _BrandLogo(glow: _glow),
+              ),
 
-            // Glow effects
-            _buildGlowEffect(Alignment.topRight, const Color(0xFFec4899)),
-            _buildGlowEffect(Alignment.bottomLeft, const Color(0xFF8b5cf6)),
-            _buildGlowEffect(Alignment.center, const Color(0xFF06b6d4)),
+              AppSpacing.vXl,
 
-            // Main content
-            Center(
-              child: FadeTransition(
-                opacity: _fadeInAnimation,
-                child: ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Animated X and O logo
-                      _buildAnimatedLogo(),
-
-                      const SizedBox(height: 40),
-
-                      // Title with glow
-                      AnimatedBuilder(
-                        animation: _glowAnimation,
-                        builder: (context, child) {
-                          return ShaderMask(
-                            shaderCallback: (bounds) {
-                              return LinearGradient(
-                                colors: [
-                                  Color(0xFFec4899).withOpacity(_glowAnimation.value),
-                                  Color(0xFF8b5cf6).withOpacity(_glowAnimation.value),
-                                  Color(0xFF06b6d4).withOpacity(_glowAnimation.value),
-                                ],
-                              ).createShader(bounds);
-                            },
-                            child: const Text(
-                              'XO GAME',
-                              style: TextStyle(
-                                fontSize: 56,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontFamily: 'Poppins',
-                                letterSpacing: 8,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Subtitle
-                      Text(
-                        'by Ahmed Hamdy',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white.withOpacity(0.6),
-                          fontFamily: 'Poppins',
-                          letterSpacing: 2,
-                        ),
-                      ),
-
-                      const SizedBox(height: 60),
-
-                      // Loading bar
-                      _buildLoadingBar(),
-                    ],
+              // ── Wordmark ──
+              FadeSlideIn(
+                delay: AppMotion.stagger(1),
+                child: ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: AppColors.heroGradient,
+                  ).createShader(bounds),
+                  child: Text(
+                    'XO GAME',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.displaySmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 8,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+
+              AppSpacing.vSm,
+
+              // ── Author credit ──
+              FadeSlideIn(
+                delay: AppMotion.stagger(2),
+                child: Text(
+                  'by Ahmed Hamdy',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: palette.textMuted,
+                    letterSpacing: 2,
+                  ),
+                ),
+              ),
+
+              AppSpacing.vXl,
+              AppSpacing.vMd,
+
+              // ── Loading indicator ──
+              FadeSlideIn(
+                delay: AppMotion.stagger(3),
+                child: _LoadingBar(progress: _progress),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildAnimatedLogo() {
+/// Calm, premium XO logo: a glass disc carrying overlapping X and O marks,
+/// wrapped in a soft brand glow that gently breathes.
+class _BrandLogo extends StatelessWidget {
+  final Animation<double> glow;
+  const _BrandLogo({required this.glow});
+
+  @override
+  Widget build(BuildContext context) {
     return AnimatedBuilder(
-      animation: Listenable.merge([_rotationController, _particleController]),
+      animation: glow,
       builder: (context, child) {
-        // Calculate dancing movement (circular motion)
-        final angle = _particleController.value * 2 * pi;
-        final offsetX = sin(angle) * 15; // Move 15 pixels in X
-        final offsetY = cos(angle * 1.5) * 15; // Move 15 pixels in Y (different speed)
-
-        // Add subtle scale pulsing
-        final scale = 1.0 + (sin(_particleController.value * 2 * pi) * 0.05);
-
-        return Transform.translate(
-          offset: Offset(offsetX, offsetY),
-          child: Transform.scale(
-            scale: scale,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Outer rotating ring
-                Transform.rotate(
-                  angle: _rotationAnimation.value,
-                  child: Container(
-                    width: 180,
-                    height: 180,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        width: 3,
-                        color: const Color(0xFFec4899).withOpacity(0.3),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Inner rotating ring (opposite direction)
-                Transform.rotate(
-                  angle: -_rotationAnimation.value,
-                  child: Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        width: 3,
-                        color: const Color(0xFF8b5cf6).withOpacity(0.3),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Center glassmorphism container with X and O
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        const Color(0xFFec4899).withOpacity(0.2),
-                        const Color(0xFF8b5cf6).withOpacity(0.2),
-                      ],
-                    ),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFec4899).withOpacity(0.4),
-                        blurRadius: 30,
-                        spreadRadius: 5,
-                      ),
-                      BoxShadow(
-                        color: const Color(0xFF8b5cf6).withOpacity(0.4),
-                        blurRadius: 30,
-                        spreadRadius: 5,
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: ShaderMask(
-                      shaderCallback: (bounds) {
-                        return const LinearGradient(
-                          colors: [
-                            Color(0xFFec4899),
-                            Color(0xFF8b5cf6),
-                            Color(0xFF06b6d4),
-                          ],
-                        ).createShader(bounds);
-                      },
-                      child: const Text(
-                        'X O',
-                        style: TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontFamily: 'Poppins',
-                          letterSpacing: 8,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildFloatingSymbol(int index, Size size) {
-    final random = Random(index);
-    final isX = index % 2 == 0;
-    final left = random.nextDouble() * size.width * 0.8;
-    final top = random.nextDouble() * size.height * 0.8;
-    final delay = index * 0.5;
-
-    return AnimatedBuilder(
-      animation: _particleController,
-      builder: (context, child) {
-        final movement = sin(_particleController.value * 2 * pi + delay) * 20;
-
-        return Positioned(
-          left: left,
-          top: top + movement,
-          child: Opacity(
-            opacity: 0.1 + (_particleController.value * 0.2),
-            child: Text(
-              isX ? 'X' : 'O',
-              style: TextStyle(
-                fontSize: 40 + (index * 5.0),
-                fontWeight: FontWeight.bold,
-                color: isX ? const Color(0xFFec4899) : const Color(0xFF8b5cf6),
-                fontFamily: 'Poppins',
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildGlowEffect(Alignment alignment, Color color) {
-    return AnimatedBuilder(
-      animation: _pulseController,
-      builder: (context, child) {
-        return Align(
-          alignment: alignment,
-          child: Container(
-            width: 300,
-            height: 300,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  color.withOpacity(0.15 * _glowAnimation.value),
-                  color.withOpacity(0.05 * _glowAnimation.value),
-                  Colors.transparent,
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildLoadingBar() {
-    return Column(
-      children: [
-        // Progress bar container
-        Container(
-          width: 250,
-          height: 6,
+        final g = glow.value;
+        return Container(
+          width: 184,
+          height: 184,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.white.withOpacity(0.1),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.2),
-              width: 1,
-            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.pink.withValues(alpha: 0.28 * g),
+                blurRadius: 48,
+                spreadRadius: 6,
+              ),
+              BoxShadow(
+                color: AppColors.teal.withValues(alpha: 0.22 * g),
+                blurRadius: 48,
+                spreadRadius: 6,
+              ),
+            ],
           ),
+          child: child,
+        );
+      },
+      child: GlassPanel(
+        borderRadius: AppRadius.rPill,
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        glowColor: AppColors.violet,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.violet.withValues(alpha: 0.22),
+            AppColors.pink.withValues(alpha: 0.18),
+          ],
+        ),
+        child: SizedBox(
+          width: 120,
+          height: 120,
+          child: Stack(
+            alignment: Alignment.center,
+            children: const [
+              Align(
+                alignment: Alignment(-0.5, -0.45),
+                child: AnimatedMark(mark: 'X', markSize: 84),
+              ),
+              Align(
+                alignment: Alignment(0.5, 0.45),
+                child: AnimatedMark(mark: 'O', markSize: 84),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Slim glass progress track with a brand-gradient fill and percentage label.
+class _LoadingBar extends StatelessWidget {
+  final double progress;
+  const _LoadingBar({required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = AppPalette.of(context);
+    final theme = Theme.of(context);
+    final pct = (progress * 100).clamp(0, 100).round();
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: 260,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Stack(
-              children: [
-                // Animated gradient progress
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 100),
-                  width: 250 * _progress,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Color(0xFFec4899),
-                        Color(0xFF8b5cf6),
-                        Color(0xFF06b6d4),
+            borderRadius: AppRadius.rPill,
+            child: Container(
+              height: 8,
+              decoration: BoxDecoration(
+                color: palette.surface2.withValues(alpha: 0.6),
+                borderRadius: AppRadius.rPill,
+                border: Border.all(color: palette.border),
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FractionallySizedBox(
+                  widthFactor: progress.clamp(0.0, 1.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: AppRadius.rPill,
+                      gradient: const LinearGradient(
+                        colors: AppColors.heroGradient,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.pink.withValues(alpha: 0.5),
+                          blurRadius: 12,
+                          spreadRadius: 1,
+                        ),
                       ],
                     ),
                   ),
                 ),
-                // Shimmer effect
-                AnimatedBuilder(
-                  animation: _particleController,
-                  builder: (context, child) {
-                    return Positioned(
-                      left: -100 + (_particleController.value * 350),
-                      child: Container(
-                        width: 100,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.transparent,
-                              Colors.white.withOpacity(0.3),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
+              ),
             ),
           ),
         ),
-
-        const SizedBox(height: 16),
-
-        // Loading text
-        AnimatedBuilder(
-          animation: _particleController,
-          builder: (context, child) {
-            final dots = '.' * ((_particleController.value * 3).toInt() + 1);
-            return Text(
-              'Loading$dots',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.white.withOpacity(0.5),
-                fontFamily: 'Poppins',
-                letterSpacing: 2,
-              ),
-            );
-          },
+        AppSpacing.vSm,
+        Text(
+          'Loading  $pct%',
+          style: theme.textTheme.labelMedium?.copyWith(
+            color: palette.textMuted,
+            letterSpacing: 2,
+          ),
         ),
       ],
     );

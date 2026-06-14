@@ -1,17 +1,18 @@
-import 'dart:math';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../blocs/game_bloc.dart';
-import '../blocs/game_state.dart';
-import '../blocs/game_event.dart';
-import '../blocs/statistics_cubit.dart';
-import '../services/achievement_service.dart';
-import '../services/database_service.dart';
-import '../models/game_replay.dart';
-import 'package:confetti/confetti.dart';
 
-/// Game Result Screen - Dramatic win/loss/draw display
+import 'package:advanced_xo_game/widgets/common/common.dart';
+import 'package:advanced_xo_game/blocs/game_bloc.dart';
+import 'package:advanced_xo_game/blocs/game_state.dart';
+import 'package:advanced_xo_game/blocs/game_event.dart';
+import 'package:advanced_xo_game/blocs/statistics_cubit.dart';
+import 'package:advanced_xo_game/services/achievement_service.dart';
+import 'package:advanced_xo_game/services/database_service.dart';
+import 'package:advanced_xo_game/services/sound_service.dart';
+import 'package:advanced_xo_game/models/game_replay.dart';
+
+/// Game Result Screen - dramatic neon-arcade win / loss / draw display.
 class GameResultScreen extends StatefulWidget {
   const GameResultScreen({super.key});
 
@@ -23,8 +24,9 @@ class _GameResultScreenState extends State<GameResultScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _fadeAnimation;
-  late ConfettiController _confettiController;
+
+  // Drives the WinConfetti overlay; flips to true after stats are recorded.
+  bool _playConfetti = false;
 
   @override
   void initState() {
@@ -42,21 +44,10 @@ class _GameResultScreenState extends State<GameResultScreen>
       ),
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeOut,
-      ),
-    );
-
-    _confettiController = ConfettiController(
-      duration: const Duration(seconds: 3),
-    );
-
     _animationController.forward();
 
-    // Record statistics and check achievements
-    // Get cubits before async gap to avoid context issues
+    // Record statistics and check achievements.
+    // Get cubits before async gap to avoid context issues.
     final gameBloc = context.read<GameBloc>();
     final statisticsCubit = context.read<StatisticsCubit>();
     final achievementService = AchievementService();
@@ -64,7 +55,7 @@ class _GameResultScreenState extends State<GameResultScreen>
     Future.delayed(const Duration(milliseconds: 100), () async {
       final gameState = gameBloc.state;
 
-      // Determine game result
+      // Determine game result.
       String result;
       String winner;
       final isDraw = gameState.resultMessage.toLowerCase().contains('draw');
@@ -72,33 +63,45 @@ class _GameResultScreenState extends State<GameResultScreen>
         result = 'draw';
         winner = 'Draw';
       } else {
-        // Extract winner from result message (e.g., "Winner: X" -> "X")
-        final winnerMatch = RegExp(r'Winner: ([XO])').firstMatch(gameState.resultMessage);
+        // Extract winner from result message (e.g., "Winner: X" -> "X").
+        final winnerMatch =
+            RegExp(r'Winner: ([XO])').firstMatch(gameState.resultMessage);
         if (winnerMatch != null) {
           winner = winnerMatch.group(1)!;
           if (gameState.gameMode == GameMode.PvP) {
-            result = 'win'; // In PvP, any win counts
+            result = 'win'; // In PvP, any win counts.
           } else {
-            // In PvC, check if winner matches player side
+            // In PvC, check if winner matches player side.
             result = winner == gameState.playerSide ? 'win' : 'loss';
           }
         } else {
-          result = 'draw'; // Fallback
+          result = 'draw'; // Fallback.
           winner = 'Draw';
         }
       }
 
-      // Check if it's a perfect game (win without opponent scoring)
+      // Check if it's a perfect game (win without opponent scoring).
       bool isPerfectGame = false;
       if (result == 'win') {
-        // Count marks on the board
+        // Count marks on the board.
         final playerMark = gameState.playerSide;
         final opponentMark = playerMark == 'X' ? 'O' : 'X';
-        final opponentMoves = gameState.board.where((cell) => cell == opponentMark).length;
+        final opponentMoves =
+            gameState.board.where((cell) => cell == opponentMark).length;
         isPerfectGame = opponentMoves == 0;
       }
 
-      // Record game in statistics
+      // Play the appropriate result sound.
+      final sound = SoundService();
+      if (result == 'win') {
+        sound.playWin();
+      } else if (result == 'loss') {
+        sound.playLose();
+      } else {
+        sound.playDraw();
+      }
+
+      // Record game in statistics.
       statisticsCubit.recordGame(
         result: result,
         gameMode: gameState.gameMode == GameMode.PvP ? 'PvP' : 'PvC',
@@ -109,10 +112,10 @@ class _GameResultScreenState extends State<GameResultScreen>
         isPerfectGame: isPerfectGame,
       );
 
-      // Save game replay
+      // Save game replay.
       try {
         final replay = GameReplay(
-          id: 0, // Will be assigned by database
+          id: 0, // Will be assigned by database.
           date: DateTime.now().toIso8601String(),
           gameMode: gameState.gameMode == GameMode.PvP ? 'PvP' : 'PvC',
           difficulty: gameState.gameMode == GameMode.PvC
@@ -126,53 +129,80 @@ class _GameResultScreenState extends State<GameResultScreen>
         );
         await DatabaseService.instance.saveReplay(replay);
 
-        // Also save to legacy history
+        // Also save to legacy history.
         await DatabaseService.instance.insertHistory(gameState.resultMessage);
       } catch (e) {
         debugPrint('Error saving game replay: $e');
       }
 
-      // Check for newly unlocked achievements
+      // Check for newly unlocked achievements.
       final stats = statisticsCubit.state;
       final newlyUnlocked = await achievementService.checkAchievements(stats);
 
-      // Show notification for newly unlocked achievements
+      // Show notification for newly unlocked achievements.
       if (mounted && newlyUnlocked.isNotEmpty) {
+        // Play the achievement-unlock sound (once per batch).
+        sound.playAchievement();
+
         for (var achievement in newlyUnlocked) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppColors.teal,
+              duration: const Duration(seconds: 3),
+              shape: const RoundedRectangleBorder(
+                borderRadius: AppRadius.rMd,
+              ),
               content: Row(
                 children: [
                   Text(
                     achievement.icon,
                     style: const TextStyle(fontSize: 24),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
+                  AppSpacing.hSm,
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
+                        Text(
                           'Achievement Unlocked!',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: AppColors.darkBg,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                        Text(achievement.title),
                       ],
                     ),
                   ),
                 ],
               ),
-              backgroundColor: const Color(0xFF16f2b3),
+            ),
+          );
+          // Keep the achievement title visible alongside the heading.
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppColors.violet,
               duration: const Duration(seconds: 3),
+              shape: const RoundedRectangleBorder(
+                borderRadius: AppRadius.rMd,
+              ),
+              content: Text(
+                achievement.title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           );
         }
       }
 
-      // Trigger confetti for wins
-      if (result == 'win') {
-        _confettiController.play();
+      // Trigger confetti for wins.
+      if (mounted && result == 'win') {
+        setState(() => _playConfetti = true);
       }
     });
   }
@@ -180,237 +210,147 @@ class _GameResultScreenState extends State<GameResultScreen>
   @override
   void dispose() {
     _animationController.dispose();
-    _confettiController.dispose();
     super.dispose();
+  }
+
+  /// Resolve the win / loss / draw classification from the current state.
+  _ResultKind _resolveKind(GameState state) {
+    final isDraw = state.resultMessage.toLowerCase().contains('draw');
+    if (isDraw) return _ResultKind.draw;
+
+    final winnerMatch =
+        RegExp(r'Winner: ([XO])').firstMatch(state.resultMessage);
+    if (winnerMatch != null) {
+      final winner = winnerMatch.group(1)!;
+      if (state.gameMode == GameMode.PvP) {
+        return _ResultKind.win; // In PvP, any win is shown as a win.
+      }
+      return winner == state.playerSide ? _ResultKind.win : _ResultKind.loss;
+    }
+    return _ResultKind.draw;
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return BlocBuilder<GameBloc, GameState>(
       builder: (context, state) {
-        // Determine result type
-        final isDraw = state.resultMessage.toLowerCase().contains('draw');
-        bool isWin = false;
+        final kind = _resolveKind(state);
+        final isWin = kind == _ResultKind.win;
 
-        if (!isDraw) {
-          // Extract winner from result message (e.g., "Winner: X" -> "X")
-          final winnerMatch = RegExp(r'Winner: ([XO])').firstMatch(state.resultMessage);
-          if (winnerMatch != null) {
-            final winner = winnerMatch.group(1)!;
-            if (state.gameMode == GameMode.PvP) {
-              isWin = true; // In PvP, any win is displayed as a win
-            } else {
-              // In PvC, check if winner matches player side
-              isWin = winner == state.playerSide;
-            }
-          }
+        final Color accent;
+        final List<Color> gradient;
+        final IconData icon;
+        final String title;
+        final String winnerMark;
+
+        switch (kind) {
+          case _ResultKind.win:
+            accent = AppColors.win;
+            gradient = AppColors.winGradient;
+            icon = Icons.emoji_events_rounded;
+            title = 'Victory!';
+            winnerMark = state.gameMode == GameMode.PvP
+                ? _extractWinner(state) ?? 'X'
+                : state.playerSide;
+            break;
+          case _ResultKind.draw:
+            accent = AppColors.draw;
+            gradient = AppColors.drawGradient;
+            icon = Icons.handshake_rounded;
+            title = 'Draw!';
+            winnerMark = '';
+            break;
+          case _ResultKind.loss:
+            accent = AppColors.lose;
+            gradient = AppColors.loseGradient;
+            icon = Icons.sentiment_dissatisfied_rounded;
+            title = 'Defeat';
+            winnerMark = _extractWinner(state) ?? '';
+            break;
         }
 
-        Color resultColor;
-        IconData resultIcon;
-        String resultTitle;
-
-        if (isWin) {
-          resultColor = const Color(0xFF16f2b3);
-          resultIcon = Icons.emoji_events_rounded;
-          resultTitle = 'Victory!';
-        } else if (isDraw) {
-          resultColor = const Color(0xFF06b6d4);
-          resultIcon = Icons.handshake_rounded;
-          resultTitle = 'Draw!';
-        } else {
-          resultColor = const Color(0xFFef4444);
-          resultIcon = Icons.sentiment_dissatisfied_rounded;
-          resultTitle = 'Defeat';
-        }
-
-        return Scaffold(
+        return AppScaffold(
           body: Stack(
             children: [
-              // Background
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [
-                            const Color(0xFF0d1224),
-                            const Color(0xFF1e1436),
-                            const Color(0xFF0f172a),
-                          ]
-                        : [
-                            Colors.blue.shade50,
-                            Colors.purple.shade50,
-                            Colors.pink.shade50,
-                          ],
-                  ),
-                ),
-              ),
-
-              // Confetti
-              if (isWin)
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: ConfettiWidget(
-                    confettiController: _confettiController,
-                    blastDirection: pi / 2,
-                    blastDirectionality: BlastDirectionality.explosive,
-                    emissionFrequency: 0.05,
-                    numberOfParticles: 20,
-                    maxBlastForce: 100,
-                    minBlastForce: 50,
-                    gravity: 0.3,
-                    colors: const [
-                      Color(0xFFec4899),
-                      Color(0xFF8b5cf6),
-                      Color(0xFF06b6d4),
-                      Color(0xFF16f2b3),
-                      Color(0xFFfbbf24),
-                    ],
-                  ),
-                ),
-
-              // Content
-              SafeArea(
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 40),
-
-                      // Result Icon with Animation
-                      ScaleTransition(
-                        scale: _scaleAnimation,
-                        child: Container(
-                          padding: const EdgeInsets.all(30),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: resultColor.withOpacity(0.2),
-                            border: Border.all(
-                              color: resultColor,
-                              width: 4,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: resultColor.withOpacity(0.4),
-                                blurRadius: 30,
-                                spreadRadius: 10,
+              Padding(
+                padding: AppSpacing.page,
+                child: Column(
+                  children: [
+                    AppSpacing.vSm,
+                    // ── Result emblem (elastic entrance) ─────────────────
+                    Expanded(
+                      child: Center(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ScaleTransition(
+                                scale: _scaleAnimation,
+                                child: _Emblem(
+                                  accent: accent,
+                                  gradient: gradient,
+                                  icon: icon,
+                                  mark: winnerMark,
+                                ),
+                              ),
+                              AppSpacing.vLg,
+                              FadeSlideIn(
+                                delay: AppMotion.stagger(1),
+                                child: ShaderMask(
+                                  shaderCallback: (rect) => LinearGradient(
+                                    colors: gradient,
+                                  ).createShader(rect),
+                                  child: Text(
+                                    title,
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .displaySmall
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                              AppSpacing.vXs,
+                              FadeSlideIn(
+                                delay: AppMotion.stagger(2),
+                                child: Text(
+                                  state.resultMessage,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        color: AppPalette.of(context).textMuted,
+                                      ),
+                                ),
+                              ),
+                              AppSpacing.vLg,
+                              FadeSlideIn(
+                                delay: AppMotion.stagger(3),
+                                child: _StatsRow(state: state),
                               ),
                             ],
                           ),
-                          child: Icon(
-                            resultIcon,
-                            size: 80,
-                            color: resultColor,
-                          ),
                         ),
                       ),
-
-                      const SizedBox(height: 30),
-
-                      // Result Title
-                      Text(
-                        resultTitle,
-                        style: TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.bold,
-                          color: resultColor,
-                          fontFamily: 'Poppins',
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // Result Message
-                      Text(
-                        state.resultMessage,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: isDark
-                              ? Colors.grey.shade300
-                              : Colors.grey.shade700,
-                        ),
-                      ),
-
-                      const SizedBox(height: 40),
-
-                      // Game Stats
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 32),
-                        child: _buildStatsCards(state, isDark),
-                      ),
-
-                      const Spacer(),
-
-                      // Action Buttons
-                      Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          children: [
-                            _buildActionButton(
-                              'Play Again',
-                              Icons.replay_rounded,
-                              const Color(0xFFec4899),
-                              const Color(0xFF8b5cf6),
-                              () {
-                                context.read<GameBloc>().add(const ResetGame());
-                                Navigator.of(context)
-                                    .pushReplacementNamed('/game-play');
-                              },
-                              isDark,
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildSecondaryButton(
-                                    'New Game',
-                                    Icons.settings_rounded,
-                                    () {
-                                      // Reset game state before navigating
-                                      context.read<GameBloc>().add(const ResetGame());
-                                      Navigator.of(context)
-                                          .pushReplacementNamed('/game-setup');
-                                    },
-                                    isDark,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildSecondaryButton(
-                                    'Main Menu',
-                                    Icons.home_rounded,
-                                    () {
-                                      // Reset game state before navigating
-                                      context.read<GameBloc>().add(const ResetGame());
-                                      Navigator.of(context)
-                                          .pushReplacementNamed('/menu');
-                                    },
-                                    isDark,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            _buildSecondaryButton(
-                              'View Replay',
-                              Icons.play_circle_outline_rounded,
-                              () {
-                                Navigator.of(context).pushNamed('/replays');
-                              },
-                              isDark,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    AppSpacing.vMd,
+                    // ── Action buttons ──────────────────────────────────
+                    FadeSlideIn(
+                      delay: AppMotion.stagger(4),
+                      child: _ActionButtons(isWin: isWin),
+                    ),
+                  ],
                 ),
               ),
+
+              // Win celebration overlay.
+              WinConfetti(shouldPlay: _playConfetti),
             ],
           ),
         );
@@ -418,184 +358,172 @@ class _GameResultScreenState extends State<GameResultScreen>
     );
   }
 
-  Widget _buildStatsCards(GameState state, bool isDark) {
-    // Calculate game stats
-    final moveCount = state.board.where((cell) => cell.isNotEmpty).length;
-    final boardSize = '${state.boardSize}×${state.boardSize}';
+  String? _extractWinner(GameState state) =>
+      RegExp(r'Winner: ([XO])').firstMatch(state.resultMessage)?.group(1);
+}
+
+enum _ResultKind { win, loss, draw }
+
+/// Big animated emblem: glowing gradient ring around the result icon, with the
+/// winner's animated mark layered on a win.
+class _Emblem extends StatelessWidget {
+  final Color accent;
+  final List<Color> gradient;
+  final IconData icon;
+  final String mark;
+
+  const _Emblem({
+    required this.accent,
+    required this.gradient,
+    required this.icon,
+    required this.mark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 180,
+      height: 180,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            accent.withValues(alpha: 0.28),
+            accent.withValues(alpha: 0.04),
+          ],
+        ),
+        border: Border.all(color: accent, width: 4),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withValues(alpha: 0.5),
+            blurRadius: 40,
+            spreadRadius: 6,
+          ),
+        ],
+      ),
+      child: Center(
+        child: (mark == 'X' || mark == 'O')
+            ? AnimatedMark(mark: mark, markSize: 96)
+            : Icon(icon, size: 92, color: accent),
+      ),
+    );
+  }
+}
+
+/// The three game-summary stat cards (moves / board / time).
+class _StatsRow extends StatelessWidget {
+  final GameState state;
+
+  const _StatsRow({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    final moveCount =
+        state.board.where((cell) => cell.isNotEmpty).length;
+    final boardLabel = '${state.boardSize}x${state.boardSize}';
     final timeUsed = state.timedMode
         ? '${(state.elapsedTime / 1000).toInt()}s'
         : 'No Limit';
 
-    return Row(
-      children: [
-        Expanded(
-          child: _buildStatCard(
-            'Moves',
-            moveCount.toString(),
-            Icons.touch_app_rounded,
-            isDark,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            'Board',
-            boardSize,
-            Icons.grid_on_rounded,
-            isDark,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _buildStatCard(
-            'Time',
-            timeUsed,
-            Icons.timer_rounded,
-            isDark,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard(
-      String label, String value, IconData icon, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withOpacity(0.05)
-            : Colors.white.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withOpacity(0.1)
-              : Colors.black.withOpacity(0.05),
-        ),
-      ),
-      child: Column(
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(
-            icon,
-            size: 28,
-            color: const Color(0xFF8b5cf6),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.grey.shade900,
+          Expanded(
+            child: StatCard(
+              icon: Icons.touch_app_rounded,
+              label: 'Moves',
+              value: moveCount,
+              accent: AppColors.violet,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+          AppSpacing.hSm,
+          Expanded(
+            child: StatCard(
+              icon: Icons.grid_on_rounded,
+              label: 'Board',
+              text: boardLabel,
+              accent: AppColors.pink,
+            ),
+          ),
+          AppSpacing.hSm,
+          Expanded(
+            child: StatCard(
+              icon: Icons.timer_rounded,
+              label: 'Time',
+              text: timeUsed,
+              accent: AppColors.teal,
             ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildActionButton(
-    String text,
-    IconData icon,
-    Color startColor,
-    Color endColor,
-    VoidCallback onPressed,
-    bool isDark,
-  ) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [startColor, endColor],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: startColor.withOpacity(0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: Colors.white, size: 24),
-              const SizedBox(width: 12),
-              Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+/// Clear CTA hierarchy: primary Play Again, then secondary New Game / Main Menu,
+/// then View Replay.
+class _ActionButtons extends StatelessWidget {
+  final bool isWin;
 
-  Widget _buildSecondaryButton(
-    String text,
-    IconData icon,
-    VoidCallback onPressed,
-    bool isDark,
-  ) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withOpacity(0.05)
-                : Colors.white.withOpacity(0.8),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.black.withOpacity(0.05),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                color: const Color(0xFF8b5cf6),
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                text,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : Colors.grey.shade900,
-                ),
-              ),
-            ],
-          ),
+  const _ActionButtons({required this.isWin});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        NeonButton(
+          label: 'Play Again',
+          icon: Icons.replay_rounded,
+          large: true,
+          variant:
+              isWin ? NeonButtonVariant.success : NeonButtonVariant.primary,
+          onTap: () {
+            context.read<GameBloc>().add(const ResetGame());
+            Navigator.of(context).pushReplacementNamed('/game-play');
+          },
         ),
-      ),
+        AppSpacing.vSm,
+        Row(
+          children: [
+            Expanded(
+              child: NeonButton(
+                label: 'New Game',
+                icon: Icons.tune_rounded,
+                variant: NeonButtonVariant.secondary,
+                onTap: () {
+                  // Reset game state before navigating.
+                  context.read<GameBloc>().add(const ResetGame());
+                  Navigator.of(context).pushReplacementNamed('/game-setup');
+                },
+              ),
+            ),
+            AppSpacing.hSm,
+            Expanded(
+              child: NeonButton(
+                label: 'Main Menu',
+                icon: Icons.home_rounded,
+                variant: NeonButtonVariant.secondary,
+                onTap: () {
+                  // Reset game state before navigating.
+                  context.read<GameBloc>().add(const ResetGame());
+                  Navigator.of(context).pushReplacementNamed('/menu');
+                },
+              ),
+            ),
+          ],
+        ),
+        AppSpacing.vSm,
+        NeonButton(
+          label: 'View Replay',
+          icon: Icons.play_circle_outline_rounded,
+          variant: NeonButtonVariant.ghost,
+          onTap: () {
+            Navigator.of(context).pushNamed('/replays');
+          },
+        ),
+      ],
     );
   }
 }

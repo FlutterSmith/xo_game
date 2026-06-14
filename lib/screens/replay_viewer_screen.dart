@@ -1,10 +1,13 @@
-import 'package:flutter/material.dart';
 import 'dart:convert';
-import '../models/game_replay.dart';
-import '../services/database_service.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-/// Screen for viewing and replaying past games
+import 'package:advanced_xo_game/widgets/common/common.dart';
+import '../models/game_replay.dart';
+import '../services/database_service.dart';
+
+/// Unified Replays screen — a neon-arcade gallery of past games with an
+/// in-screen replay player. Merges the old History screen into this one.
 class ReplayViewerScreen extends StatefulWidget {
   const ReplayViewerScreen({super.key});
 
@@ -17,6 +20,9 @@ class _ReplayViewerScreenState extends State<ReplayViewerScreen> {
   List<GameReplay> _replays = [];
   bool _loading = true;
 
+  // The replay currently open in the in-screen player (null = list view).
+  GameReplay? _active;
+
   @override
   void initState() {
     super.initState();
@@ -24,113 +30,95 @@ class _ReplayViewerScreenState extends State<ReplayViewerScreen> {
   }
 
   Future<void> _loadReplays() async {
-    final replays = await _db.getReplays();
-    setState(() {
-      _replays = replays;
-      _loading = false;
-    });
+    try {
+      final replays = await _db.getReplays();
+      if (!mounted) return;
+      setState(() {
+        _replays = replays;
+        _loading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading replays: $e');
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Game Replays'),
-        centerTitle: true,
-        actions: [
-          if (_replays.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.delete_sweep),
-              tooltip: 'Clear All Replays',
-              onPressed: _showClearConfirmation,
-            ),
-        ],
-      ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _replays.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _replays.length,
-                  itemBuilder: (context, index) {
-                    return _buildReplayCard(_replays[index]);
-                  },
-                ),
+  Future<void> _deleteReplay(int id) async {
+    await _db.deleteReplay(id);
+    await _loadReplays();
+  }
+
+  Future<void> _confirmClearAll() async {
+    final ok = await _showConfirmSheet(
+      title: 'Clear All Replays',
+      message:
+          'Delete every saved replay? This action cannot be undone.',
+      confirmLabel: 'Clear All',
     );
+    if (ok == true) {
+      await _db.clearAllReplays();
+      await _loadReplays();
+    }
   }
 
-  Widget _buildEmptyState() {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.movie_outlined, size: 100, color: Colors.grey),
-          SizedBox(height: 16),
-          Text(
-            'No Game Replays',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 8),
-          Text(
-            'Finish a game to save a replay!',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReplayCard(GameReplay replay) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => _viewReplay(replay),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+  Future<bool?> _showConfirmSheet({
+    required String title,
+    required String message,
+    required String confirmLabel,
+  }) {
+    final theme = Theme.of(context);
+    return showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Padding(
+        padding: AppSpacing.page,
+        child: GlassPanel(
+          glowColor: AppColors.red,
+          padding: AppSpacing.page,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: AppColors.red.withValues(alpha: 0.16),
+                      borderRadius: AppRadius.rMd,
+                    ),
+                    child: const Icon(Icons.delete_outline_rounded,
+                        color: AppColors.red),
+                  ),
+                  AppSpacing.hSm,
+                  Expanded(
+                    child: Text(title, style: theme.textTheme.titleLarge),
+                  ),
+                ],
+              ),
+              AppSpacing.vSm,
+              Text(message, style: theme.textTheme.bodyMedium),
+              AppSpacing.vLg,
+              Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      replay.result,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: NeonButton(
+                      label: 'Cancel',
+                      variant: NeonButtonVariant.secondary,
+                      onTap: () => Navigator.of(ctx).pop(false),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => _deleteReplay(replay.id),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _buildChip(replay.gameMode, Icons.gamepad),
-                  const SizedBox(width: 8),
-                  if (replay.gameMode == 'PvC')
-                    _buildChip(replay.difficulty, Icons.psychology),
-                  const SizedBox(width: 8),
-                  _buildChip('${replay.boardSize}x${replay.boardSize}', Icons.grid_3x3),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Moves: ${replay.movesCount}',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  Text(
-                    _formatDate(replay.date),
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                  AppSpacing.hSm,
+                  Expanded(
+                    child: NeonButton(
+                      label: confirmLabel,
+                      icon: Icons.delete_forever_rounded,
+                      variant: NeonButtonVariant.danger,
+                      onTap: () => Navigator.of(ctx).pop(true),
+                    ),
                   ),
                 ],
               ),
@@ -141,79 +129,320 @@ class _ReplayViewerScreenState extends State<ReplayViewerScreen> {
     );
   }
 
-  Widget _buildChip(String label, IconData icon) {
-    return Chip(
-      avatar: Icon(icon, size: 16),
-      label: Text(label),
-      padding: EdgeInsets.zero,
-      visualDensity: VisualDensity.compact,
+  void _openReplay(GameReplay replay) {
+    setState(() => _active = replay);
+  }
+
+  void _closeReplay() {
+    setState(() => _active = null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final inPlayer = _active != null;
+    return AppScaffold(
+      title: inPlayer ? 'Replay' : 'Replays',
+      showBack: true,
+      onBack: inPlayer ? _closeReplay : null,
+      actions: [
+        if (!inPlayer && _replays.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(right: AppSpacing.md),
+            child: GlassIconButton(
+              icon: Icons.delete_sweep_rounded,
+              color: AppColors.red,
+              tooltip: 'Clear all',
+              onTap: _confirmClearAll,
+            ),
+          ),
+      ],
+      body: inPlayer
+          ? _ReplayPlayer(
+              key: ValueKey(_active!.id),
+              replay: _active!,
+            )
+          : _buildListView(),
     );
   }
 
-  String _formatDate(String isoDate) {
-    try {
-      final date = DateTime.parse(isoDate);
-      return DateFormat('MMM d, y h:mm a').format(date);
-    } catch (e) {
-      return 'Unknown';
+  Widget _buildListView() {
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.violet),
+      );
     }
-  }
+    if (_replays.isEmpty) {
+      return _buildEmptyState();
+    }
 
-  Future<void> _viewReplay(GameReplay replay) async {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ReplayPlayerScreen(replay: replay),
+    return RefreshIndicator(
+      color: AppColors.violet,
+      backgroundColor: AppPalette.of(context).surface,
+      onRefresh: _loadReplays,
+      child: ListView.separated(
+        padding: AppSpacing.page,
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: _replays.length + 1,
+        separatorBuilder: (_, __) => AppSpacing.vSm,
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return FadeSlideIn(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                child: SectionHeader(
+                  icon: Icons.movie_creation_rounded,
+                  title: 'Game Replays',
+                  subtitle:
+                      '${_replays.length} saved ${_replays.length == 1 ? 'game' : 'games'} • tap to watch',
+                  accent: AppColors.pink,
+                ),
+              ),
+            );
+          }
+          final replay = _replays[index - 1];
+          return FadeSlideIn(
+            delay: AppMotion.stagger(index),
+            child: _buildReplayCard(replay),
+          );
+        },
       ),
     );
   }
 
-  Future<void> _deleteReplay(int id) async {
-    await _db.deleteReplay(id);
-    _loadReplays();
+  Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+    return Center(
+      child: FadeSlideIn(
+        child: Padding(
+          padding: AppSpacing.page,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: AppColors.primaryGradient,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.violet.withValues(alpha: 0.45),
+                      blurRadius: 36,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.movie_filter_rounded,
+                  size: 56,
+                  color: Colors.white,
+                ),
+              ),
+              AppSpacing.vLg,
+              Text(
+                'No Replays Yet',
+                style: theme.textTheme.headlineSmall,
+                textAlign: TextAlign.center,
+              ),
+              AppSpacing.vXs,
+              Text(
+                'Finish a game and it will be saved here for you to watch move by move.',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppPalette.of(context).textMuted,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              AppSpacing.vLg,
+              NeonButton(
+                label: 'Play a Game',
+                icon: Icons.sports_esports_rounded,
+                expand: false,
+                onTap: () => Navigator.of(context).pushNamed('/game-setup'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
-  Future<void> _showClearConfirmation() async {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear All Replays'),
-        content: const Text(
-          'Are you sure you want to delete all game replays? This action cannot be undone.',
+  Widget _buildReplayCard(GameReplay replay) {
+    final theme = Theme.of(context);
+    final isDraw = replay.winner == 'Draw';
+    final accent =
+        isDraw ? AppColors.draw : AppColors.markColor(replay.winner);
+
+    return Dismissible(
+      key: ValueKey('replay-${replay.id}'),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (_) async {
+        final ok = await _showConfirmSheet(
+          title: 'Delete Replay',
+          message:
+              'Remove this game from your replays? This cannot be undone.',
+          confirmLabel: 'Delete',
+        );
+        if (ok == true) {
+          await _deleteReplay(replay.id);
+        }
+        return false; // We refresh the list ourselves; avoid double-remove.
+      },
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.red.withValues(alpha: 0.18),
+          borderRadius: AppRadius.rLg,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              _db.clearAllReplays();
-              Navigator.pop(context);
-              _loadReplays();
-            },
-            child: const Text(
-              'Clear All',
-              style: TextStyle(color: Colors.red),
+        child: const Icon(Icons.delete_rounded, color: AppColors.red),
+      ),
+      child: GlassPanel(
+        onTap: () => _openReplay(replay),
+        glowColor: accent,
+        glowBlur: 18,
+        borderColor: accent.withValues(alpha: 0.35),
+        child: Row(
+          children: [
+            _resultBadge(replay, accent),
+            AppSpacing.hMd,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    replay.result,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  AppSpacing.vXs,
+                  Wrap(
+                    spacing: AppSpacing.xs,
+                    runSpacing: AppSpacing.xxs,
+                    children: [
+                      _chip(replay.gameMode, Icons.people_alt_rounded,
+                          AppColors.violet),
+                      _chip('${replay.boardSize}×${replay.boardSize}',
+                          Icons.grid_view_rounded, AppColors.cyan),
+                      if (replay.gameMode == 'PvC')
+                        _chip(
+                          replay.difficulty,
+                          Icons.psychology_rounded,
+                          AppColors.difficulty(replay.difficulty),
+                        ),
+                      _chip('${replay.movesCount} moves',
+                          Icons.touch_app_rounded, AppColors.pink),
+                    ],
+                  ),
+                  AppSpacing.vXs,
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.schedule_rounded,
+                        size: 13,
+                        color: AppPalette.of(context).textMuted,
+                      ),
+                      AppSpacing.hXs,
+                      Flexible(
+                        child: Text(
+                          _formatDate(replay.date),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppPalette.of(context).textMuted,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            AppSpacing.hXs,
+            const Icon(Icons.play_circle_fill_rounded,
+                color: AppColors.violet, size: 30),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _resultBadge(GameReplay replay, Color accent) {
+    final isDraw = replay.winner == 'Draw';
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.16),
+        shape: BoxShape.circle,
+        border: Border.all(color: accent.withValues(alpha: 0.6), width: 2),
+      ),
+      alignment: Alignment.center,
+      child: Icon(
+        isDraw
+            ? Icons.handshake_rounded
+            : Icons.emoji_events_rounded,
+        color: accent,
+        size: 26,
+      ),
+    );
+  }
+
+  Widget _chip(String label, IconData icon, Color accent) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs, vertical: AppSpacing.xxs),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.14),
+        borderRadius: AppRadius.rPill,
+        border: Border.all(color: accent.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: accent),
+          AppSpacing.hXs,
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: accent,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
       ),
     );
   }
+
+  String _formatDate(String isoDate) {
+    try {
+      final date = DateTime.parse(isoDate);
+      return DateFormat('MMM d, y · h:mm a').format(date);
+    } catch (e) {
+      return 'Unknown';
+    }
+  }
 }
 
-/// Screen for playing back a specific game replay
-class ReplayPlayerScreen extends StatefulWidget {
+/// In-screen replay player — steps through the moves of a single [GameReplay]
+/// on a mini neon board. Preserves the original playback logic (even index = X,
+/// odd = O, 800 ms auto-play interval, slider + prev/next/play controls).
+class _ReplayPlayer extends StatefulWidget {
   final GameReplay replay;
 
-  const ReplayPlayerScreen({super.key, required this.replay});
+  const _ReplayPlayer({super.key, required this.replay});
 
   @override
-  State<ReplayPlayerScreen> createState() => _ReplayPlayerScreenState();
+  State<_ReplayPlayer> createState() => _ReplayPlayerState();
 }
 
-class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
+class _ReplayPlayerState extends State<_ReplayPlayer> {
   int _currentMoveIndex = 0;
   late List<int> _moves;
   late List<String> _board;
@@ -223,13 +452,15 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
   void initState() {
     super.initState();
     _moves = (jsonDecode(widget.replay.moves) as List).cast<int>();
-    _board = List.filled(widget.replay.boardSize * widget.replay.boardSize, '');
+    _board =
+        List.filled(widget.replay.boardSize * widget.replay.boardSize, '');
     _updateBoardToMove(0);
   }
 
   void _updateBoardToMove(int moveIndex) {
     setState(() {
-      _board = List.filled(widget.replay.boardSize * widget.replay.boardSize, '');
+      _board =
+          List.filled(widget.replay.boardSize * widget.replay.boardSize, '');
       for (int i = 0; i <= moveIndex && i < _moves.length; i++) {
         final player = i % 2 == 0 ? 'X' : 'O';
         _board[_moves[i]] = player;
@@ -244,11 +475,12 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
     });
 
     for (int i = _currentMoveIndex; i < _moves.length; i++) {
-      if (!_isPlaying) break;
+      if (!_isPlaying || !mounted) break;
       _updateBoardToMove(i);
       await Future.delayed(const Duration(milliseconds: 800));
     }
 
+    if (!mounted) return;
     setState(() {
       _isPlaying = false;
     });
@@ -262,141 +494,328 @@ class _ReplayPlayerScreenState extends State<ReplayPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Replay'),
-        centerTitle: true,
-      ),
-      body: Column(
+    final replay = widget.replay;
+    final hasMoves = _moves.isNotEmpty;
+
+    return ListView(
+      padding: AppSpacing.page,
+      children: [
+        FadeSlideIn(child: _buildHeader(replay)),
+        AppSpacing.vLg,
+        FadeSlideIn(
+          delay: AppMotion.stagger(1),
+          child: Center(child: _buildBoard()),
+        ),
+        AppSpacing.vLg,
+        if (hasMoves)
+          FadeSlideIn(
+            delay: AppMotion.stagger(2),
+            child: _buildControls(),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildHeader(GameReplay replay) {
+    final theme = Theme.of(context);
+    final isDraw = replay.winner == 'Draw';
+    final accent =
+        isDraw ? AppColors.draw : AppColors.markColor(replay.winner);
+    final total = _moves.isEmpty ? 0 : _moves.length;
+    final shown = _moves.isEmpty ? 0 : _currentMoveIndex + 1;
+
+    return GlassPanel(
+      glowColor: accent,
+      child: Column(
         children: [
-          _buildGameInfo(),
-          Expanded(
-            child: Center(
-              child: _buildBoard(),
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                  border:
+                      Border.all(color: accent.withValues(alpha: 0.6), width: 2),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  isDraw
+                      ? Icons.handshake_rounded
+                      : Icons.emoji_events_rounded,
+                  color: accent,
+                  size: 24,
+                ),
+              ),
+              AppSpacing.hMd,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      replay.result,
+                      style: theme.textTheme.titleLarge,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    AppSpacing.vXs,
+                    Wrap(
+                      spacing: AppSpacing.xs,
+                      runSpacing: AppSpacing.xxs,
+                      children: [
+                        _miniChip(replay.gameMode, AppColors.violet),
+                        _miniChip('${replay.boardSize}×${replay.boardSize}',
+                            AppColors.cyan),
+                        if (replay.gameMode == 'PvC')
+                          _miniChip(replay.difficulty,
+                              AppColors.difficulty(replay.difficulty)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          AppSpacing.vMd,
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+            decoration: BoxDecoration(
+              color: AppColors.violet.withValues(alpha: 0.12),
+              borderRadius: AppRadius.rPill,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.timeline_rounded,
+                    size: 16, color: AppColors.violet),
+                AppSpacing.hXs,
+                Text(
+                  'Move $shown of $total',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
           ),
-          _buildControls(),
         ],
       ),
     );
   }
 
-  Widget _buildGameInfo() {
+  Widget _miniChip(String label, Color accent) {
+    final theme = Theme.of(context);
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      color: Theme.of(context).primaryColor.withOpacity(0.1),
-      child: Column(
-        children: [
-          Text(
-            widget.replay.result,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Move ${_currentMoveIndex + 1} of ${_moves.length}',
-            style: const TextStyle(fontSize: 16),
-          ),
-        ],
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs, vertical: AppSpacing.xxs),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.14),
+        borderRadius: AppRadius.rPill,
+        border: Border.all(color: accent.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: accent,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
 
   Widget _buildBoard() {
     final size = widget.replay.boardSize;
-    final cellSize = (MediaQuery.of(context).size.width - 64) / size;
+    final p = AppPalette.of(context);
 
-    return AspectRatio(
-      aspectRatio: 1,
-      child: GridView.builder(
-        padding: const EdgeInsets.all(16),
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: size,
-          crossAxisSpacing: 4,
-          mainAxisSpacing: 4,
-        ),
-        itemCount: size * size,
-        itemBuilder: (context, index) {
-          return Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final boardSide =
+            constraints.maxWidth.clamp(0, 420).toDouble();
+        const gap = AppSpacing.xs;
+        final cellSize = (boardSide - gap * (size - 1) - AppSpacing.md * 2) /
+            size;
+
+        return Container(
+          width: boardSide,
+          padding: AppSpacing.card,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.violet.withValues(alpha: 0.10),
+                AppColors.pink.withValues(alpha: 0.06),
+              ],
             ),
-            child: Center(
-              child: Text(
-                _board[index],
-                style: TextStyle(
-                  fontSize: cellSize * 0.5,
-                  fontWeight: FontWeight.bold,
-                  color: _board[index] == 'X' ? Colors.blue : Colors.red,
-                ),
+            borderRadius: AppRadius.rXl,
+            border: Border.all(color: p.border, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.violet.withValues(alpha: 0.30),
+                blurRadius: 30,
+                offset: const Offset(0, 12),
               ),
+            ],
+          ),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: size,
+              crossAxisSpacing: gap,
+              mainAxisSpacing: gap,
             ),
-          );
-        },
-      ),
+            itemCount: size * size,
+            itemBuilder: (context, index) {
+              final mark = _board[index];
+              return Container(
+                decoration: BoxDecoration(
+                  color: p.surface.withValues(alpha: p.isDark ? 0.5 : 0.7),
+                  borderRadius: AppRadius.rMd,
+                  border: Border.all(color: p.border),
+                ),
+                alignment: Alignment.center,
+                child: mark.isEmpty
+                    ? null
+                    : AnimatedMark(
+                        key: ValueKey('cell-$index-$mark-$_currentMoveIndex'),
+                        mark: mark,
+                        markSize: cellSize * 0.78,
+                      ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
   Widget _buildControls() {
-    return Container(
-      padding: const EdgeInsets.all(16),
+    final theme = Theme.of(context);
+    final maxIndex = _moves.length - 1;
+    final atStart = _currentMoveIndex == 0;
+    final atEnd = _currentMoveIndex >= maxIndex;
+
+    return GlassPanel(
       child: Column(
         children: [
-          Slider(
-            value: _currentMoveIndex.toDouble(),
-            min: 0,
-            max: (_moves.length - 1).toDouble(),
-            divisions: _moves.length > 1 ? _moves.length - 1 : 1,
-            onChanged: _isPlaying
-                ? null
-                : (value) {
-                    _updateBoardToMove(value.toInt());
-                  },
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: AppColors.violet,
+              inactiveTrackColor: AppColors.violet.withValues(alpha: 0.2),
+              thumbColor: AppColors.pink,
+              overlayColor: AppColors.violet.withValues(alpha: 0.2),
+              trackHeight: 5,
+            ),
+            child: Slider(
+              value: _currentMoveIndex.toDouble(),
+              min: 0,
+              max: maxIndex > 0 ? maxIndex.toDouble() : 1,
+              divisions: maxIndex > 0 ? maxIndex : 1,
+              onChanged: _isPlaying || maxIndex <= 0
+                  ? null
+                  : (value) => _updateBoardToMove(value.toInt()),
+            ),
           ),
-          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Start',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: AppPalette.of(context).textMuted,
+                    )),
+                Text('End',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: AppPalette.of(context).textMuted,
+                    )),
+              ],
+            ),
+          ),
+          AppSpacing.vMd,
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              IconButton(
-                icon: const Icon(Icons.skip_previous),
-                iconSize: 32,
-                onPressed: _isPlaying || _currentMoveIndex == 0
+              _ctrlButton(
+                icon: Icons.first_page_rounded,
+                onTap: _isPlaying || atStart
                     ? null
                     : () => _updateBoardToMove(0),
               ),
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                iconSize: 32,
-                onPressed: _isPlaying || _currentMoveIndex == 0
+              _ctrlButton(
+                icon: Icons.chevron_left_rounded,
+                onTap: _isPlaying || atStart
                     ? null
                     : () => _updateBoardToMove(_currentMoveIndex - 1),
               ),
-              IconButton(
-                icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-                iconSize: 48,
-                onPressed: _isPlaying ? _stopReplay : _playReplay,
+              _playButton(),
+              _ctrlButton(
+                icon: Icons.chevron_right_rounded,
+                onTap: _isPlaying || atEnd
+                    ? null
+                    : () => _updateBoardToMove(_currentMoveIndex + 1),
               ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                iconSize: 32,
-                onPressed:
-                    _isPlaying || _currentMoveIndex >= _moves.length - 1
-                        ? null
-                        : () => _updateBoardToMove(_currentMoveIndex + 1),
-              ),
-              IconButton(
-                icon: const Icon(Icons.skip_next),
-                iconSize: 32,
-                onPressed:
-                    _isPlaying || _currentMoveIndex >= _moves.length - 1
-                        ? null
-                        : () => _updateBoardToMove(_moves.length - 1),
+              _ctrlButton(
+                icon: Icons.last_page_rounded,
+                onTap: _isPlaying || atEnd
+                    ? null
+                    : () => _updateBoardToMove(maxIndex),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _playButton() {
+    return Pressable(
+      onTap: _isPlaying ? _stopReplay : _playReplay,
+      child: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: AppColors.primaryGradient),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.violet.withValues(alpha: 0.5),
+              blurRadius: 22,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Icon(
+          _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+          color: Colors.white,
+          size: 34,
+        ),
+      ),
+    );
+  }
+
+  Widget _ctrlButton({required IconData icon, VoidCallback? onTap}) {
+    final p = AppPalette.of(context);
+    final enabled = onTap != null;
+    return Pressable(
+      onTap: onTap,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: p.surface,
+          shape: BoxShape.circle,
+          border: Border.all(color: p.border),
+        ),
+        child: Icon(
+          icon,
+          color: enabled ? p.text : p.textMuted.withValues(alpha: 0.4),
+          size: 26,
+        ),
       ),
     );
   }
