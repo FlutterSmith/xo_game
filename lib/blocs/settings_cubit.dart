@@ -11,6 +11,10 @@ class SettingsCubit extends Cubit<AppSettings> {
   final SoundService _soundService = SoundService();
   final VibrationService _vibrationService = VibrationService();
 
+  /// True once [loadSettings] has finished (success or failure). Lets the UI
+  /// distinguish the seed default from genuinely-loaded settings.
+  bool isLoaded = false;
+
   SettingsCubit() : super(AppSettings.defaultSettings()) {
     loadSettings();
   }
@@ -24,12 +28,14 @@ class SettingsCubit extends Cubit<AppSettings> {
       _soundService.setSoundEnabled(settings.soundEnabled);
       _soundService.setMusicEnabled(settings.musicEnabled);
       _vibrationService.setVibrationEnabled(settings.vibrationEnabled);
+      isLoaded = true;
       emit(settings);
       debugPrint('[SettingsCubit] loadSettings - Settings emitted successfully');
     } catch (e, stack) {
       debugPrint('[SettingsCubit] ERROR in loadSettings: $e');
       debugPrint('[SettingsCubit] Stack: $stack');
       // Emit default settings on error
+      isLoaded = true;
       emit(AppSettings.defaultSettings());
     }
   }

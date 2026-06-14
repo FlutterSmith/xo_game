@@ -43,13 +43,26 @@ class _MainMenuScreenState extends State<MainMenuScreen>
 
     _animationController.forward();
 
-    // Show name prompt dialog on first launch
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final settings = context.read<SettingsCubit>().state;
-      if (settings.playerName == 'Player') {
-        _showNamePromptDialog();
-      }
-    });
+    // Prompt for a name only once settings have actually loaded — avoids the
+    // race where the seed default 'Player' fired the prompt on every launch.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybePromptForName());
+  }
+
+  bool _namePromptHandled = false;
+
+  void _maybePromptForName() {
+    if (_namePromptHandled || !mounted) return;
+    final cubit = context.read<SettingsCubit>();
+    if (!cubit.isLoaded) {
+      // Settings still loading; check again shortly.
+      Future.delayed(const Duration(milliseconds: 150), _maybePromptForName);
+      return;
+    }
+    _namePromptHandled = true;
+    final name = cubit.state.playerName.trim();
+    if (name.isEmpty || name == 'Player') {
+      _showNamePromptDialog();
+    }
   }
 
   void _showNamePromptDialog() {
