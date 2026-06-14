@@ -33,9 +33,12 @@ class GameBoard extends StatelessWidget {
                 : 38.0;
         final spacing = size == 3 ? 10.0 : 8.0;
 
-        return AspectRatio(
-          aspectRatio: 1,
-          child: GridView.builder(
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 460, maxHeight: 460),
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: GridView.builder(
             padding: EdgeInsets.zero,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -63,6 +66,8 @@ class GameBoard extends StatelessWidget {
                 },
               );
             },
+              ),
+            ),
           ),
         );
       },
